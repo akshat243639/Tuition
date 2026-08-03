@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>EduPortal - Coaching Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -18,6 +18,15 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Mobile Touch Fixes */
+    button, input, select, textarea {
+      -webkit-tap-highlight-color: transparent;
+    }
+    input, select, textarea {
+      font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
+    }
+  </style>
 </head>
 <body class="bg-brand-softBg font-sans text-slate-800 min-h-screen flex flex-col">
 
@@ -37,7 +46,7 @@
       <!-- Auth Header Info -->
       <div id="authHeader" class="hidden flex items-center gap-3">
         <span id="userBadge" class="text-xs bg-blue-900/80 border border-blue-400/30 px-3 py-1.5 rounded-xl text-blue-100 font-medium"></span>
-        <button onclick="handleLogout()" class="bg-brand-accentRed hover:bg-red-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold transition shadow">
+        <button id="logoutBtn" class="bg-brand-accentRed hover:bg-red-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold transition shadow">
           <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
         </button>
       </div>
@@ -52,7 +61,7 @@
         <p id="authSubtitle" class="text-xs text-slate-500">Sign in to access your tuition portal</p>
       </div>
 
-      <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+      <form id="authForm" class="space-y-4">
         <div>
           <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email Address</label>
           <input type="email" id="authEmail" required placeholder="name@example.com" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
@@ -76,7 +85,7 @@
       </form>
 
       <div class="text-center border-t pt-4">
-        <button type="button" id="toggleAuthModeBtn" onclick="toggleAuthMode()" class="text-xs font-bold text-brand-lightBlue hover:underline p-2">
+        <button type="button" id="toggleAuthModeBtn" class="text-xs font-bold text-brand-lightBlue hover:underline p-2">
           Don't have an account? Sign Up
         </button>
       </div>
@@ -88,10 +97,10 @@
 
     <!-- NAVIGATION TABS -->
     <div class="flex border-b border-slate-200 mb-6 bg-white rounded-xl p-1 shadow-sm border">
-      <button id="tabOverviewBtn" onclick="switchTab('overview')" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50">
+      <button id="tabOverviewBtn" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50">
         <i class="fa-solid fa-house mr-2"></i>Dashboard & Feed
       </button>
-      <button id="tabTestsBtn" onclick="switchTab('tests')" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue">
+      <button id="tabTestsBtn" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue">
         <i class="fa-solid fa-file-signature mr-2"></i>Tests & Marks
       </button>
     </div>
@@ -105,10 +114,10 @@
             <p class="text-sm text-slate-500">Manage batch slots, daily attendance, and post class updates.</p>
           </div>
           <div class="flex gap-3">
-            <button onclick="openModal('createSlotModal')" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition">
+            <button id="openCreateSlotBtn" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition">
               <i class="fa-solid fa-plus mr-2"></i> New Batch Slot
             </button>
-            <button onclick="openModal('postContentModal')" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition">
+            <button id="openPostModalBtn" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition">
               <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Upload Post / Material
             </button>
           </div>
@@ -121,7 +130,7 @@
                 <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-clipboard-user text-brand-lightBlue mr-2"></i>Mark Attendance</h3>
                 <p class="text-xs text-slate-500">Select a slot to load student rosters and toggle status.</p>
               </div>
-              <select id="teacherSlotSelect" onchange="loadAttendanceRoster()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-brand-lightBlue focus:border-brand-lightBlue p-2.5 font-medium"></select>
+              <select id="teacherSlotSelect" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-brand-lightBlue focus:border-brand-lightBlue p-2.5 font-medium"></select>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-sm text-left text-slate-600">
@@ -137,7 +146,7 @@
             </div>
             <div class="flex justify-between items-center pt-2">
               <span class="text-xs text-slate-400" id="attendanceSummaryText">0 Students Listed</span>
-              <button onclick="saveAttendance()" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Attendance</button>
+              <button id="saveAttendanceBtn" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Attendance</button>
             </div>
           </div>
 
@@ -154,7 +163,7 @@
             <h2 class="text-2xl font-bold text-slate-800">Test & Marks Portal</h2>
             <p class="text-sm text-slate-500">Create new tests and input student scores per batch slot.</p>
           </div>
-          <button onclick="openModal('createTestModal')" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-plus mr-2"></i> Create New Test</button>
+          <button id="openCreateTestBtn" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-plus mr-2"></i> Create New Test</button>
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
@@ -163,7 +172,7 @@
               <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-pen-to-square text-brand-lightBlue mr-2"></i>Input / Edit Test Marks</h3>
               <p class="text-xs text-slate-500">Select a test to enter student marks.</p>
             </div>
-            <select id="teacherTestSelect" onchange="loadTestMarksEditor()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-brand-lightBlue focus:border-brand-lightBlue p-2.5 font-medium"></select>
+            <select id="teacherTestSelect" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-brand-lightBlue focus:border-brand-lightBlue p-2.5 font-medium"></select>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-slate-600">
@@ -180,7 +189,7 @@
           </div>
           <div class="flex justify-between items-center pt-2">
             <span class="text-xs text-slate-400" id="testMarksSummaryText">0 Records Loaded</span>
-            <button onclick="saveTestMarks()" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Marks</button>
+            <button id="saveTestMarksBtn" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Marks</button>
           </div>
         </div>
       </div>
@@ -194,7 +203,7 @@
             <h2 class="text-2xl font-bold text-slate-800">Student Portal</h2>
             <p class="text-sm text-slate-500">View enrolled slots, mark attendance records, and access study materials.</p>
           </div>
-          <button onclick="openModal('joinBatchModal')" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-key mr-2"></i> Join Batch with Code</button>
+          <button id="openJoinBatchBtn" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-key mr-2"></i> Join Batch with Code</button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -229,9 +238,9 @@
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 class="font-bold text-lg text-slate-800">Create New Tuition Slot</h3>
-        <button onclick="closeModal('createSlotModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <form onsubmit="handleCreateSlot(event)" class="space-y-3">
+      <form id="createSlotForm" class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Slot Name / Class Title</label>
           <input type="text" id="slotTitleInput" required placeholder="e.g., Class 12 - Applied Math" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
@@ -241,7 +250,7 @@
           <input type="text" id="slotTimingInput" required placeholder="e.g., Mon/Wed/Fri - 4:00 PM" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button type="button" onclick="closeModal('createSlotModal')" class="px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+          <button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
           <button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Create Slot</button>
         </div>
       </form>
@@ -253,9 +262,9 @@
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 class="font-bold text-lg text-slate-800">Create New Tuition Test</h3>
-        <button onclick="closeModal('createTestModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <form onsubmit="handleCreateTest(event)" class="space-y-3">
+      <form id="createTestForm" class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Batch Slot</label>
           <select id="testTargetSlot" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"></select>
@@ -269,7 +278,7 @@
           <input type="number" id="testMaxMarksInput" required value="50" min="1" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button type="button" onclick="closeModal('createTestModal')" class="px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+          <button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
           <button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Create Test</button>
         </div>
       </form>
@@ -281,9 +290,9 @@
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 class="font-bold text-lg text-slate-800">Upload Notes / Homework / Announcement</h3>
-        <button onclick="closeModal('postContentModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <form onsubmit="handlePostContent(event)" class="space-y-3">
+      <form id="postContentForm" class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Batch Slot</label>
           <select id="postTargetSlot" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"></select>
@@ -309,7 +318,7 @@
           <input type="file" id="postFileInput" accept="image/*,.pdf" class="w-full border border-slate-300 p-2 rounded-xl text-xs text-slate-600 focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button type="button" onclick="closeModal('postContentModal')" class="px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+          <button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
           <button type="submit" id="postSubmitBtn" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Publish Post</button>
         </div>
       </form>
@@ -321,22 +330,22 @@
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 class="font-bold text-lg text-slate-800">Join Batch Slot</h3>
-        <button onclick="closeModal('joinBatchModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <form onsubmit="handleJoinBatch(event)" class="space-y-3">
+      <form id="joinBatchForm" class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Enter 6-Digit Join Code</label>
           <input type="text" id="batchCodeInput" maxlength="6" required placeholder="e.g., MATH12" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm font-mono tracking-widest text-center uppercase text-lg focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button type="button" onclick="closeModal('joinBatchModal')" class="px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+          <button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
           <button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Join Batch</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- JAVASCRIPT & SUPABASE AUTH LOGIC -->
+  <!-- JAVASCRIPT & SUPABASE LOGIC -->
   <script>
     const SUPABASE_URL = 'https://adxzqbaosvadpchrdshe.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeHpxYmFvc3ZhZHBjaHJkc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MzE0MjcsImV4cCI6MjEwMTMwNzQyN30.9wkzGmtlVf9Fv1Zpant2Q-FDYnOLi6QBs6ERqrSSOFo';
@@ -357,24 +366,66 @@
       posts: []
     };
 
-    // Global Functions for Mobile Compatibility
-    window.toggleAuthMode = function() {
-      isSignUpMode = !isSignUpMode;
-      document.getElementById('authTitle').innerText = isSignUpMode ? "Create Account" : "Welcome Back";
-      document.getElementById('authSubtitle').innerText = isSignUpMode ? "Sign up to access your tuition portal" : "Sign in to access your tuition portal";
-      document.getElementById('authSubmitBtn').innerText = isSignUpMode ? "Sign Up" : "Sign In";
-      document.getElementById('toggleAuthModeBtn').innerText = isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up";
+    // CROSS-PLATFORM DOM LOAD INITIALIZER
+    document.addEventListener('DOMContentLoaded', () => {
       
-      const roleGroup = document.getElementById('roleSelectGroup');
-      if (isSignUpMode) {
-        roleGroup.classList.remove('hidden');
-      } else {
-        roleGroup.classList.add('hidden');
+      // Bind Auth Toggle Event
+      const toggleBtn = document.getElementById('toggleAuthModeBtn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          isSignUpMode = !isSignUpMode;
+          document.getElementById('authTitle').innerText = isSignUpMode ? "Create Account" : "Welcome Back";
+          document.getElementById('authSubtitle').innerText = isSignUpMode ? "Sign up to access your tuition portal" : "Sign in to access your tuition portal";
+          document.getElementById('authSubmitBtn').innerText = isSignUpMode ? "Sign Up" : "Sign In";
+          document.getElementById('toggleAuthModeBtn').innerText = isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up";
+          
+          const roleGroup = document.getElementById('roleSelectGroup');
+          if (isSignUpMode) roleGroup.classList.remove('hidden');
+          else roleGroup.classList.add('hidden');
+        });
       }
-    };
 
-    window.openModal = function(id) { document.getElementById(id).classList.remove('hidden'); };
-    window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); };
+      // Bind Auth Submit Event
+      document.getElementById('authForm').addEventListener('submit', handleAuthSubmit);
+
+      // Bind Modal Handlers
+      document.getElementById('openCreateSlotBtn')?.addEventListener('click', () => openModal('createSlotModal'));
+      document.getElementById('openPostModalBtn')?.addEventListener('click', () => openModal('postContentModal'));
+      document.getElementById('openCreateTestBtn')?.addEventListener('click', () => openModal('createTestModal'));
+      document.getElementById('openJoinBatchBtn')?.addEventListener('click', () => openModal('joinBatchModal'));
+      
+      document.querySelectorAll('.closeModalBtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
+        });
+      });
+
+      // Bind Tabs
+      document.getElementById('tabOverviewBtn')?.addEventListener('click', () => switchTab('overview'));
+      document.getElementById('tabTestsBtn')?.addEventListener('click', () => switchTab('tests'));
+
+      // Bind Logout
+      document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+
+      // Bind Form Submissions
+      document.getElementById('createSlotForm')?.addEventListener('submit', handleCreateSlot);
+      document.getElementById('createTestForm')?.addEventListener('submit', handleCreateTest);
+      document.getElementById('postContentForm')?.addEventListener('submit', handlePostContent);
+      document.getElementById('joinBatchForm')?.addEventListener('submit', handleJoinBatch);
+
+      document.getElementById('teacherSlotSelect')?.addEventListener('change', loadAttendanceRoster);
+      document.getElementById('teacherTestSelect')?.addEventListener('change', loadTestMarksEditor);
+
+      document.getElementById('saveAttendanceBtn')?.addEventListener('click', saveAttendance);
+      document.getElementById('saveTestMarksBtn')?.addEventListener('click', saveTestMarks);
+
+      // Check session state
+      checkSession();
+    });
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
     async function handleAuthSubmit(e) {
       e.preventDefault();
@@ -428,12 +479,11 @@
       }
     }
 
-    window.handleLogout = async function() {
+    async function handleLogout() {
       await supabase.auth.signOut();
       window.location.reload();
-    };
+    }
 
-    // --- DATA FETCHING ---
     async function loadAllSupabaseData() {
       const { data: slots } = await supabase.from('slots').select('*');
       if (slots) appState.slots = slots;
@@ -455,7 +505,7 @@
       else renderStudentView();
     }
 
-    window.switchTab = function(tab) {
+    function switchTab(tab) {
       const tabOverviewBtn = document.getElementById('tabOverviewBtn');
       const tabTestsBtn = document.getElementById('tabTestsBtn');
 
@@ -474,11 +524,10 @@
         document.getElementById('studentOverviewTab').classList.add('hidden');
         document.getElementById('studentTestsTab').classList.remove('hidden');
       }
-    };
+    }
 
     function generateCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
 
-    // --- TEACHER FUNCTIONS ---
     async function handleCreateSlot(e) {
       e.preventDefault();
       const title = document.getElementById('slotTitleInput').value.trim();
@@ -575,7 +624,7 @@
       loadTestMarksEditor();
     }
 
-    window.loadAttendanceRoster = function() {
+    function loadAttendanceRoster() {
       const selectedSlotId = document.getElementById('teacherSlotSelect').value;
       const tbody = document.getElementById('attendanceRosterBody');
       tbody.innerHTML = '';
@@ -599,16 +648,16 @@
           </tr>
         `;
       });
-    };
+    }
 
-    window.toggleAttendance = function(slotId, studentId, isChecked) {
+    function toggleAttendance(slotId, studentId, isChecked) {
       if (!appState.attendance[slotId]) appState.attendance[slotId] = {};
       appState.attendance[slotId][studentId] = isChecked;
-    };
+    }
 
-    window.saveAttendance = function() { alert("Attendance saved!"); };
+    function saveAttendance() { alert("Attendance saved!"); }
 
-    window.loadTestMarksEditor = function() {
+    function loadTestMarksEditor() {
       const testId = document.getElementById('teacherTestSelect').value;
       const tbody = document.getElementById('testMarksEditorBody');
       tbody.innerHTML = '';
@@ -632,16 +681,15 @@
           </tr>
         `;
       });
-    };
+    }
 
-    window.updateStudentMark = async function(testId, studentName, val) {
+    async function updateStudentMark(testId, studentName, val) {
       const numVal = val === '' ? 0 : parseFloat(val);
       await supabase.from('test_marks').upsert({ test_id: testId, student_name: studentName, marks_obtained: numVal });
-    };
+    }
 
-    window.saveTestMarks = function() { alert("Marks saved!"); };
+    function saveTestMarks() { alert("Marks saved!"); }
 
-    // --- STUDENT FUNCTIONS ---
     function renderStudentView() {
       const feedContainer = document.getElementById('studentFeedList');
       feedContainer.innerHTML = '';
@@ -720,7 +768,7 @@
       });
     }
 
-    window.reactPost = async function(postId, type) {
+    async function reactPost(postId, type) {
       const post = appState.posts.find(p => p.id === postId);
       if (post) {
         const count = type === 'up' ? (post.thumbs_up || 0) + 1 : (post.thumbs_down || 0) + 1;
@@ -728,9 +776,9 @@
         await supabase.from('posts').update({ [field]: count }).eq('id', postId);
         await loadAllSupabaseData();
       }
-    };
+    }
 
-    window.handleJoinBatch = function(e) {
+    function handleJoinBatch(e) {
       e.preventDefault();
       const code = document.getElementById('batchCodeInput').value.trim().toUpperCase();
       const matchedSlot = appState.slots.find(s => s.code === code);
@@ -738,10 +786,7 @@
       alert(`Joined ${matchedSlot.title}!`);
       closeModal('joinBatchModal');
       e.target.reset();
-    };
-
-    // Check auth session on page load
-    checkSession();
+    }
   </script>
 </body>
 </html>

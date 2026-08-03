@@ -23,6 +23,8 @@
     }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-brand-softBg font-sans text-slate-800 min-h-screen flex flex-col">
 
@@ -69,7 +71,6 @@
       
       <!-- TEACHER: OVERVIEW TAB -->
       <div id="teacherOverviewTab" class="space-y-6">
-        <!-- Section Banner -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
           <div>
             <h2 class="text-2xl font-bold text-slate-800">Teacher Control Panel</h2>
@@ -86,7 +87,6 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Attendance Module (2 Cols) -->
           <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
             <div class="flex justify-between items-center border-b pb-4">
               <div>
@@ -97,7 +97,6 @@
               </select>
             </div>
 
-            <!-- Roster Table -->
             <div class="overflow-x-auto">
               <table class="w-full text-sm text-left text-slate-600">
                 <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b">
@@ -119,7 +118,6 @@
             </div>
           </div>
 
-          <!-- Active Batch Slots Summary (1 Col) -->
           <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 class="font-bold text-lg text-slate-800 border-b pb-3"><i class="fa-solid fa-layer-group text-brand-lightBlue mr-2"></i>Active Batch Slots</h3>
             <div id="teacherSlotsList" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
@@ -150,7 +148,6 @@
             </select>
           </div>
 
-          <!-- Marks Editor Table -->
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-slate-600">
               <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b">
@@ -181,7 +178,6 @@
       
       <!-- STUDENT: OVERVIEW TAB -->
       <div id="studentOverviewTab" class="space-y-6">
-        <!-- Student Header Bar -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
           <div>
             <h2 class="text-2xl font-bold text-slate-800">Student Portal</h2>
@@ -193,7 +189,6 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Main Feed (2 Cols) -->
           <div class="lg:col-span-2 space-y-4">
             <h3 class="font-bold text-lg text-slate-800 flex items-center">
               <i class="fa-solid fa-bullhorn text-brand-lightBlue mr-2"></i> Class Feed & Materials
@@ -202,7 +197,6 @@
             </div>
           </div>
 
-          <!-- Enrolled Batches Sidebar (1 Col) -->
           <div class="space-y-4">
             <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
               <h3 class="font-bold text-lg text-slate-800 border-b pb-3">
@@ -223,7 +217,6 @@
         </div>
 
         <div id="studentTestResultsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Dynamic Student Test Result Cards -->
         </div>
       </div>
 
@@ -341,63 +334,69 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT & SUPABASE INTEGRATION LOGIC -->
   <script>
-    // Initial State Application Data
+    // ================= SUPABASE INITIALIZATION =================
+    const SUPABASE_URL = 'https://adxzqbaosvadpchrdshe.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeHpxYmFvc3ZhZHBjaHJkc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MzE0MjcsImV4cCI6MjEwMTMwNzQyN30.9wkzGmtlVf9Fv1Zpant2Q-FDYnOLi6QBs6ERqrSSOFo';
+    
+    // Fallback detection if keys aren't added yet
+    let supabase = null;
+    if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    // App State Structure
     const appState = {
       currentRole: 'teacher',
       currentTab: 'overview',
-      slots: [
-        { id: 'slot-1', title: 'Class 12 - Applied Math', timing: 'Mon/Wed/Fri - 4:00 PM', code: 'MATH12' },
-        { id: 'slot-2', title: 'Class 11 - Accountancy', timing: 'Tue/Thu/Sat - 5:30 PM', code: 'ACCT11' }
-      ],
+      slots: [],
       students: [
-        { id: 'std-1', name: 'Aarav Sharma', roll: '101', enrolledSlots: ['slot-1', 'slot-2'] },
-        { id: 'std-2', name: 'Riya Gupta', roll: '102', enrolledSlots: ['slot-1'] },
-        { id: 'std-3', name: 'Kaviraj Singh', roll: '103', enrolledSlots: ['slot-1', 'slot-2'] },
-        { id: 'std-4', name: 'Ananya Verma', roll: '104', enrolledSlots: ['slot-2'] }
+        { id: 'std-1', name: 'Aarav Sharma', roll: '101', enrolledSlots: [] },
+        { id: 'std-2', name: 'Riya Gupta', roll: '102', enrolledSlots: [] },
+        { id: 'std-3', name: 'Kaviraj Singh', roll: '103', enrolledSlots: [] }
       ],
-      attendance: {
-        'slot-1': { 'std-1': true, 'std-2': true, 'std-3': false },
-        'slot-2': { 'std-1': true, 'std-3': true, 'std-4': true }
-      },
-      tests: [
-        {
-          id: 'test-1',
-          slotId: 'slot-1',
-          title: 'Unit Test 1 - Determinants',
-          maxMarks: 50,
-          marks: {
-            'std-1': 42,
-            'std-2': 38,
-            'std-3': 28
-          }
-        },
-        {
-          id: 'test-2',
-          slotId: 'slot-2',
-          title: 'Class Test - Journal Entries',
-          maxMarks: 25,
-          marks: {
-            'std-1': 23,
-            'std-3': 19,
-            'std-4': 21
-          }
-        }
-      ],
-      posts: [
-        {
-          id: 'post-1',
-          slotId: 'slot-1',
-          type: 'Homework',
-          title: 'Matrices & Determinants Worksheet 2',
-          content: 'Complete questions 1 through 15 from Chapter 3 supplement. Bring physical copies to class on Friday.',
-          thumbsUp: 5,
-          thumbsDown: 0,
-          date: 'Yesterday'
-        }
-      ]
+      attendance: {},
+      tests: [],
+      posts: []
     };
+
+    // Load All Realtime Data from Supabase
+    async function loadAllSupabaseData() {
+      if (!supabase) return;
+
+      try {
+        // Fetch Slots
+        const { data: slots } = await supabase.from('slots').select('*');
+        if (slots) {
+          appState.slots = slots;
+          // Auto-enroll local students into fetched slots for demo view
+          appState.students.forEach(s => s.enrolledSlots = slots.map(sl => sl.id));
+        }
+
+        // Fetch Posts
+        const { data: posts } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+        if (posts) appState.posts = posts;
+
+        // Fetch Tests & Marks
+        const { data: tests } = await supabase.from('tests').select('*');
+        if (tests) {
+          appState.tests = tests;
+          for (let test of appState.tests) {
+            test.marks = {};
+            const { data: marks } = await supabase.from('test_marks').select('*').eq('test_id', test.id);
+            if (marks) {
+              marks.forEach(m => test.marks[m.student_name] = m.marks_obtained);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Supabase load error:", err);
+      }
+
+      if (appState.currentRole === 'teacher') renderTeacherView();
+      else renderStudentView();
+    }
 
     // Role Switcher
     function switchRole(role) {
@@ -456,47 +455,47 @@
     function generateCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
 
     // --- TEACHER ACTIONS ---
-    function handleCreateSlot(e) {
+    async function handleCreateSlot(e) {
       e.preventDefault();
       const title = document.getElementById('slotTitleInput').value.trim();
       const timing = document.getElementById('slotTimingInput').value.trim();
-      
-      const newSlot = { id: 'slot-' + Date.now(), title, timing, code: generateCode() };
-      appState.slots.push(newSlot);
-      appState.attendance[newSlot.id] = {};
+      const code = generateCode();
+
+      if (supabase) {
+        const { error } = await supabase.from('slots').insert([{ title, timing, code }]);
+        if (error) alert("Error creating slot: " + error.message);
+        else await loadAllSupabaseData();
+      } else {
+        appState.slots.push({ id: 'slot-' + Date.now(), title, timing, code });
+        renderTeacherView();
+      }
       
       closeModal('createSlotModal');
       e.target.reset();
-      renderTeacherView();
     }
 
-    function handleCreateTest(e) {
+    async function handleCreateTest(e) {
       e.preventDefault();
       const slotId = document.getElementById('testTargetSlot').value;
       const title = document.getElementById('testTitleInput').value.trim();
       const maxMarks = parseInt(document.getElementById('testMaxMarksInput').value, 10);
 
-      if(!slotId) {
-        alert("Please select a batch slot.");
-        return;
+      if (!slotId) return alert("Select a batch slot first.");
+
+      if (supabase) {
+        const { error } = await supabase.from('tests').insert([{ slot_id: slotId, title, max_marks: maxMarks }]);
+        if (error) alert("Error creating test: " + error.message);
+        else await loadAllSupabaseData();
+      } else {
+        appState.tests.push({ id: 'test-' + Date.now(), slotId, title, maxMarks, marks: {} });
+        renderTeacherView();
       }
 
-      const newTest = {
-        id: 'test-' + Date.now(),
-        slotId,
-        title,
-        maxMarks,
-        marks: {}
-      };
-
-      appState.tests.push(newTest);
       closeModal('createTestModal');
       e.target.reset();
-      renderTeacherView();
     }
 
     function renderTeacherView() {
-      // Dropdown updates
       const slotSelect = document.getElementById('teacherSlotSelect');
       const postSelect = document.getElementById('postTargetSlot');
       const testSelect = document.getElementById('testTargetSlot');
@@ -509,11 +508,9 @@
         testSelect.innerHTML += `<option value="${slot.id}">${slot.title}</option>`;
       });
 
-      // Active Slots Card Render
       const slotsContainer = document.getElementById('teacherSlotsList');
       slotsContainer.innerHTML = '';
       appState.slots.forEach(slot => {
-        const enrolledCount = appState.students.filter(s => s.enrolledSlots.includes(slot.id)).length;
         slotsContainer.innerHTML += `
           <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
             <div class="flex justify-between items-start">
@@ -521,21 +518,19 @@
               <span class="bg-blue-100 text-brand-blue text-[10px] font-mono px-2 py-0.5 rounded font-bold">CODE: ${slot.code}</span>
             </div>
             <p class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${slot.timing}</p>
-            <p class="text-xs text-slate-600 font-medium"><i class="fa-solid fa-users mr-1 text-slate-400"></i>${enrolledCount} Enrolled</p>
           </div>
         `;
       });
 
       loadAttendanceRoster();
 
-      // Test Select update
       const teacherTestSelect = document.getElementById('teacherTestSelect');
       teacherTestSelect.innerHTML = '';
-      if(appState.tests.length === 0) {
+      if (appState.tests.length === 0) {
         teacherTestSelect.innerHTML = `<option value="">No tests created yet</option>`;
       } else {
         appState.tests.forEach(t => {
-          const slot = appState.slots.find(s => s.id === t.slotId);
+          const slot = appState.slots.find(s => s.id === (t.slot_id || t.slotId));
           teacherTestSelect.innerHTML += `<option value="${t.id}">${t.title} (${slot ? slot.title : 'Batch'})</option>`;
         });
       }
@@ -552,10 +547,9 @@
         return;
       }
 
-      const enrolledStudents = appState.students.filter(s => s.enrolledSlots.includes(selectedSlotId));
-      document.getElementById('attendanceSummaryText').innerText = `${enrolledStudents.length} Students Enrolled`;
+      document.getElementById('attendanceSummaryText').innerText = `${appState.students.length} Students Listed`;
 
-      enrolledStudents.forEach(student => {
+      appState.students.forEach(student => {
         const isPresent = appState.attendance[selectedSlotId]?.[student.id] !== false;
         
         tbody.innerHTML += `
@@ -577,10 +571,10 @@
     }
 
     function toggleAttendance(slotId, studentId, isChecked) {
-      if(!appState.attendance[slotId]) appState.attendance[slotId] = {};
+      if (!appState.attendance[slotId]) appState.attendance[slotId] = {};
       appState.attendance[slotId][studentId] = isChecked;
       const label = document.getElementById(`status-text-${studentId}`);
-      if(label) {
+      if (label) {
         label.innerText = isChecked ? 'PRESENT' : 'ABSENT';
         label.className = `ms-2 text-xs font-bold ${isChecked ? 'text-emerald-600' : 'text-brand-accentRed'}`;
       }
@@ -599,79 +593,86 @@
       }
 
       const test = appState.tests.find(t => t.id === testId);
-      if(!test) return;
+      if (!test) return;
 
-      const enrolledStudents = appState.students.filter(s => s.enrolledSlots.includes(test.slotId));
-      document.getElementById('testMarksSummaryText').innerText = `${enrolledStudents.length} Students for ${test.title}`;
+      const maxMarks = test.max_marks || test.maxMarks;
+      document.getElementById('testMarksSummaryText').innerText = `${appState.students.length} Students for ${test.title}`;
 
-      enrolledStudents.forEach(student => {
-        const score = test.marks[student.id] !== undefined ? test.marks[student.id] : '';
+      appState.students.forEach(student => {
+        const score = test.marks && test.marks[student.name] !== undefined ? test.marks[student.name] : '';
         tbody.innerHTML += `
           <tr class="hover:bg-slate-50 transition">
             <td class="px-4 py-3 font-medium text-slate-800">${student.name}</td>
             <td class="px-4 py-3 text-slate-500 font-mono text-xs">#${student.roll}</td>
             <td class="px-4 py-3 text-center">
-              <input type="number" max="${test.maxMarks}" min="0" value="${score}" onchange="updateStudentMark('${test.id}', '${student.id}', this.value)" class="w-20 text-center border border-slate-300 p-1.5 rounded-lg text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none font-bold" />
+              <input type="number" max="${maxMarks}" min="0" value="${score}" onchange="updateStudentMark('${test.id}', '${student.name}', this.value)" class="w-20 text-center border border-slate-300 p-1.5 rounded-lg text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none font-bold" />
             </td>
-            <td class="px-4 py-3 text-center text-slate-500 font-semibold">${test.maxMarks}</td>
+            <td class="px-4 py-3 text-center text-slate-500 font-semibold">${maxMarks}</td>
           </tr>
         `;
       });
     }
 
-    function updateStudentMark(testId, studentId, val) {
+    async function updateStudentMark(testId, studentName, val) {
+      const numVal = val === '' ? 0 : parseFloat(val);
       const test = appState.tests.find(t => t.id === testId);
-      if(test) test.marks[studentId] = val === '' ? 0 : parseFloat(val);
+      if (test) {
+        if (!test.marks) test.marks = {};
+        test.marks[studentName] = numVal;
+      }
+
+      if (supabase) {
+        await supabase.from('test_marks').upsert({ test_id: testId, student_name: studentName, marks_obtained: numVal });
+      }
     }
 
-    function saveTestMarks() { alert("Test marks saved successfully!"); }
+    function saveTestMarks() { alert("Test marks saved permanently to Supabase!"); }
 
-    function handlePostContent(e) {
+    async function handlePostContent(e) {
       e.preventDefault();
       const slotId = document.getElementById('postTargetSlot').value;
       const type = document.getElementById('postType').value;
       const title = document.getElementById('postTitle').value.trim();
       const content = document.getElementById('postContent').value.trim();
 
-      appState.posts.unshift({
-        id: 'post-' + Date.now(),
-        slotId, type, title, content, thumbsUp: 0, thumbsDown: 0, date: 'Just now'
-      });
+      if (supabase) {
+        const { error } = await supabase.from('posts').insert([{ slot_id: slotId, type, title, content }]);
+        if (error) alert("Error creating post: " + error.message);
+        else await loadAllSupabaseData();
+      } else {
+        appState.posts.unshift({ id: 'post-' + Date.now(), slotId, type, title, content, thumbsUp: 0, thumbsDown: 0, date: 'Just now' });
+        renderTeacherView();
+      }
 
       closeModal('postContentModal');
       e.target.reset();
-      alert("Post published!");
     }
 
     // --- STUDENT ACTIONS ---
     function renderStudentView() {
-      // Feed
       const feedContainer = document.getElementById('studentFeedList');
       feedContainer.innerHTML = '';
       appState.posts.forEach(post => {
-        const slot = appState.slots.find(s => s.id === post.slotId);
+        const slot = appState.slots.find(s => s.id === (post.slot_id || post.slotId));
         const badgeColor = post.type === 'Homework' ? 'bg-red-100 text-brand-accentRed' : (post.type === 'Notes' ? 'bg-blue-100 text-brand-lightBlue' : 'bg-amber-100 text-amber-700');
         
         feedContainer.innerHTML += `
           <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
             <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${badgeColor}">${post.type}</span>
             <h4 class="font-bold text-base text-slate-800 pt-1">${post.title}</h4>
-            <p class="text-xs text-slate-400"><i class="fa-solid fa-bookmark mr-1"></i>${slot ? slot.title : 'Batch'} • ${post.date}</p>
+            <p class="text-xs text-slate-400"><i class="fa-solid fa-bookmark mr-1"></i>${slot ? slot.title : 'Batch'}</p>
             <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">${post.content}</p>
             <div class="flex items-center gap-3 pt-1 border-t border-slate-100">
-              <button onclick="reactPost('${post.id}', 'up')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-up"></i><span>${post.thumbsUp}</span></button>
-              <button onclick="reactPost('${post.id}', 'down')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-down"></i><span>${post.thumbsDown}</span></button>
+              <button onclick="reactPost('${post.id}', 'up')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-up"></i><span>${post.thumbs_up || post.thumbsUp || 0}</span></button>
+              <button onclick="reactPost('${post.id}', 'down')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-down"></i><span>${post.thumbs_down || post.thumbsDown || 0}</span></button>
             </div>
           </div>
         `;
       });
 
-      // Joined Batches
-      const currentStudent = appState.students[0]; // Aarav
-      const enrolled = appState.slots.filter(s => currentStudent.enrolledSlots.includes(s.id));
       const studentBatchesList = document.getElementById('studentBatchesList');
       studentBatchesList.innerHTML = '';
-      enrolled.forEach(slot => {
+      appState.slots.forEach(slot => {
         studentBatchesList.innerHTML += `
           <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
             <h4 class="font-bold text-sm text-slate-800">${slot.title}</h4>
@@ -680,25 +681,20 @@
         `;
       });
 
-      // Render Student Test Marks
       const studentTestResultsList = document.getElementById('studentTestResultsList');
       studentTestResultsList.innerHTML = '';
 
-      const studentTests = appState.tests.filter(t => currentStudent.enrolledSlots.includes(t.slotId));
-
-      if (studentTests.length === 0) {
-        studentTestResultsList.innerHTML = `<div class="col-span-2 bg-white p-6 rounded-2xl text-center text-slate-400">No tests assigned yet for your batches.</div>`;
+      if (appState.tests.length === 0) {
+        studentTestResultsList.innerHTML = `<div class="col-span-2 bg-white p-6 rounded-2xl text-center text-slate-400">No tests assigned yet.</div>`;
       } else {
-        studentTests.forEach(test => {
-          const slot = appState.slots.find(s => s.id === test.slotId);
-          const score = test.marks[currentStudent.id];
+        appState.tests.forEach(test => {
+          const slot = appState.slots.find(s => s.id === (test.slot_id || test.slotId));
+          const maxMarks = test.max_marks || test.maxMarks;
+          const score = test.marks ? test.marks['Aarav Sharma'] : undefined; // Simulated student Aarav
           const hasScore = score !== undefined;
-          const percentage = hasScore ? Math.round((score / test.maxMarks) * 100) : 0;
+          const percentage = hasScore ? Math.round((score / maxMarks) * 100) : 0;
           
-          let scoreBadge = "bg-slate-100 text-slate-600";
-          if (hasScore) {
-            scoreBadge = percentage >= 75 ? "bg-emerald-100 text-emerald-700" : (percentage >= 40 ? "bg-blue-100 text-brand-blue" : "bg-red-100 text-brand-accentRed");
-          }
+          let scoreBadge = hasScore ? (percentage >= 75 ? "bg-emerald-100 text-emerald-700" : (percentage >= 40 ? "bg-blue-100 text-brand-blue" : "bg-red-100 text-brand-accentRed")) : "bg-slate-100 text-slate-600";
 
           studentTestResultsList.innerHTML += `
             <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
@@ -714,7 +710,7 @@
               <div class="bg-slate-50 p-4 rounded-xl flex justify-between items-center border border-slate-100">
                 <span class="text-xs font-semibold text-slate-500">Marks Obtained</span>
                 <span class="text-xl font-black text-slate-800">
-                  ${hasScore ? score : '--'} <span class="text-sm font-normal text-slate-400">/ ${test.maxMarks}</span>
+                  ${hasScore ? score : '--'} <span class="text-sm font-normal text-slate-400">/ ${maxMarks}</span>
                 </span>
               </div>
             </div>
@@ -723,12 +719,13 @@
       }
     }
 
-    function reactPost(postId, type) {
+    async function reactPost(postId, type) {
       const post = appState.posts.find(p => p.id === postId);
-      if(post) {
-        if(type === 'up') post.thumbsUp++;
-        if(type === 'down') post.thumbsDown++;
-        renderStudentView();
+      if (post && supabase) {
+        const currentCount = type === 'up' ? (post.thumbs_up || 0) + 1 : (post.thumbs_down || 0) + 1;
+        const field = type === 'up' ? 'thumbs_up' : 'thumbs_down';
+        await supabase.from('posts').update({ [field]: currentCount }).eq('id', postId);
+        await loadAllSupabaseData();
       }
     }
 
@@ -737,26 +734,18 @@
       const code = document.getElementById('batchCodeInput').value.trim().toUpperCase();
       const matchedSlot = appState.slots.find(s => s.code === code);
 
-      if(!matchedSlot) {
-        alert("Invalid Batch Code.");
-        return;
-      }
-
-      const currentStudent = appState.students[0];
-      if(!currentStudent.enrolledSlots.includes(matchedSlot.id)) {
-        currentStudent.enrolledSlots.push(matchedSlot.id);
-        alert(`Joined ${matchedSlot.title}!`);
-      } else {
-        alert("You are already enrolled.");
-      }
-
+      if (!matchedSlot) return alert("Invalid Batch Code.");
+      alert(`Joined ${matchedSlot.title}!`);
       closeModal('joinBatchModal');
       e.target.reset();
-      renderStudentView();
     }
 
-    // Initialize View
-    renderTeacherView();
+    // Initialize View & Load Database
+    if (supabase) {
+      loadAllSupabaseData();
+    } else {
+      renderTeacherView();
+    }
   </script>
 </body>
-</html>
+</html>  

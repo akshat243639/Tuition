@@ -76,7 +76,7 @@
       </form>
 
       <div class="text-center border-t pt-4">
-        <button id="toggleAuthModeBtn" onclick="toggleAuthMode()" class="text-xs font-bold text-brand-lightBlue hover:underline">
+        <button type="button" id="toggleAuthModeBtn" onclick="toggleAuthMode()" class="text-xs font-bold text-brand-lightBlue hover:underline p-2">
           Don't have an account? Sign Up
         </button>
       </div>
@@ -357,8 +357,8 @@
       posts: []
     };
 
-    // --- AUTH LOGIC ---
-    function toggleAuthMode() {
+    // Global Functions for Mobile Compatibility
+    window.toggleAuthMode = function() {
       isSignUpMode = !isSignUpMode;
       document.getElementById('authTitle').innerText = isSignUpMode ? "Create Account" : "Welcome Back";
       document.getElementById('authSubtitle').innerText = isSignUpMode ? "Sign up to access your tuition portal" : "Sign in to access your tuition portal";
@@ -366,9 +366,15 @@
       document.getElementById('toggleAuthModeBtn').innerText = isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up";
       
       const roleGroup = document.getElementById('roleSelectGroup');
-      if (isSignUpMode) roleGroup.classList.remove('hidden');
-      else roleGroup.classList.add('hidden');
-    }
+      if (isSignUpMode) {
+        roleGroup.classList.remove('hidden');
+      } else {
+        roleGroup.classList.add('hidden');
+      }
+    };
+
+    window.openModal = function(id) { document.getElementById(id).classList.remove('hidden'); };
+    window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); };
 
     async function handleAuthSubmit(e) {
       e.preventDefault();
@@ -422,10 +428,10 @@
       }
     }
 
-    async function handleLogout() {
+    window.handleLogout = async function() {
       await supabase.auth.signOut();
       window.location.reload();
-    }
+    };
 
     // --- DATA FETCHING ---
     async function loadAllSupabaseData() {
@@ -449,7 +455,7 @@
       else renderStudentView();
     }
 
-    function switchTab(tab) {
+    window.switchTab = function(tab) {
       const tabOverviewBtn = document.getElementById('tabOverviewBtn');
       const tabTestsBtn = document.getElementById('tabTestsBtn');
 
@@ -468,10 +474,8 @@
         document.getElementById('studentOverviewTab').classList.add('hidden');
         document.getElementById('studentTestsTab').classList.remove('hidden');
       }
-    }
+    };
 
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function generateCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
 
     // --- TEACHER FUNCTIONS ---
@@ -571,7 +575,7 @@
       loadTestMarksEditor();
     }
 
-    function loadAttendanceRoster() {
+    window.loadAttendanceRoster = function() {
       const selectedSlotId = document.getElementById('teacherSlotSelect').value;
       const tbody = document.getElementById('attendanceRosterBody');
       tbody.innerHTML = '';
@@ -595,16 +599,16 @@
           </tr>
         `;
       });
-    }
+    };
 
-    function toggleAttendance(slotId, studentId, isChecked) {
+    window.toggleAttendance = function(slotId, studentId, isChecked) {
       if (!appState.attendance[slotId]) appState.attendance[slotId] = {};
       appState.attendance[slotId][studentId] = isChecked;
-    }
+    };
 
-    function saveAttendance() { alert("Attendance saved!"); }
+    window.saveAttendance = function() { alert("Attendance saved!"); };
 
-    function loadTestMarksEditor() {
+    window.loadTestMarksEditor = function() {
       const testId = document.getElementById('teacherTestSelect').value;
       const tbody = document.getElementById('testMarksEditorBody');
       tbody.innerHTML = '';
@@ -628,14 +632,14 @@
           </tr>
         `;
       });
-    }
+    };
 
-    async function updateStudentMark(testId, studentName, val) {
+    window.updateStudentMark = async function(testId, studentName, val) {
       const numVal = val === '' ? 0 : parseFloat(val);
       await supabase.from('test_marks').upsert({ test_id: testId, student_name: studentName, marks_obtained: numVal });
-    }
+    };
 
-    function saveTestMarks() { alert("Marks saved!"); }
+    window.saveTestMarks = function() { alert("Marks saved!"); };
 
     // --- STUDENT FUNCTIONS ---
     function renderStudentView() {
@@ -716,7 +720,7 @@
       });
     }
 
-    async function reactPost(postId, type) {
+    window.reactPost = async function(postId, type) {
       const post = appState.posts.find(p => p.id === postId);
       if (post) {
         const count = type === 'up' ? (post.thumbs_up || 0) + 1 : (post.thumbs_down || 0) + 1;
@@ -724,9 +728,9 @@
         await supabase.from('posts').update({ [field]: count }).eq('id', postId);
         await loadAllSupabaseData();
       }
-    }
+    };
 
-    function handleJoinBatch(e) {
+    window.handleJoinBatch = function(e) {
       e.preventDefault();
       const code = document.getElementById('batchCodeInput').value.trim().toUpperCase();
       const matchedSlot = appState.slots.find(s => s.code === code);
@@ -734,7 +738,7 @@
       alert(`Joined ${matchedSlot.title}!`);
       closeModal('joinBatchModal');
       e.target.reset();
-    }
+    };
 
     // Check auth session on page load
     checkSession();

@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduPortal - Coaching & Tuition Management</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue: '#1E3A8A',
+              lightBlue: '#3B82F6',
+              accentRed: '#EF4444',
+              softBg: '#F8FAFC'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-brand-softBg font-sans text-slate-800 min-h-screen flex flex-col">
+
+  <!-- TOP HEADER & ROLE SWITCHER -->
+  <header class="bg-brand-blue text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-white text-brand-blue p-2 rounded-lg font-black text-xl shadow">
+          <i class="fa-solid font-bold fa-graduation-cap"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-xl leading-tight">EduPortal</h1>
+          <p class="text-xs text-blue-200">Tuition & Batch Management Platform</p>
+        </div>
+      </div>
+
+      <!-- Role Switcher Control -->
+      <div class="flex items-center bg-blue-900/60 p-1 rounded-xl border border-blue-400/30">
+        <button id="btnRoleTeacher" onclick="switchRole('teacher')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-brand-blue shadow">
+          <i class="fa-solid fa-chalkboard-user mr-1.5"></i> Teacher Mode
+        </button>
+        <button id="btnRoleStudent" onclick="switchRole('student')" class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 text-blue-100 hover:text-white">
+          <i class="fa-solid fa-user-graduate mr-1.5"></i> Student Mode
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+
+    <!-- NAVIGATION TABS -->
+    <div class="flex border-b border-slate-200 mb-6 bg-white rounded-xl p-1 shadow-sm border">
+      <button id="tabOverviewBtn" onclick="switchTab('overview')" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50">
+        <i class="fa-solid fa-house mr-2"></i>Dashboard & Feed
+      </button>
+      <button id="tabTestsBtn" onclick="switchTab('tests')" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue">
+        <i class="fa-solid fa-file-signature mr-2"></i>Tests & Marks
+      </button>
+    </div>
+
+    <!-- ================= TEACHER DASHBOARD ================= -->
+    <div id="teacherDashboard" class="space-y-6">
+      
+      <!-- TEACHER: OVERVIEW TAB -->
+      <div id="teacherOverviewTab" class="space-y-6">
+        <!-- Section Banner -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">Teacher Control Panel</h2>
+            <p class="text-sm text-slate-500">Manage batch slots, daily attendance, and post class updates.</p>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="openModal('createSlotModal')" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition">
+              <i class="fa-solid fa-plus mr-2"></i> New Batch Slot
+            </button>
+            <button onclick="openModal('postContentModal')" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition">
+              <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Upload Post / Homework
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Attendance Module (2 Cols) -->
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <div class="flex justify-between items-center border-b pb-4">
+              <div>
+                <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-clipboard-user text-brand-lightBlue mr-2"></i>Mark Attendance</h3>
+                <p class="text-xs text-slate-500">Select a slot to load student rosters and toggle status.</p>
+              </div>
+              <select id="teacherSlotSelect" onchange="loadAttendanceRoster()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-brand-lightBlue focus:border-brand-lightBlue p-2.5 font-medium">
+              </select>
+            </div>
+
+            <!-- Roster Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left text-slate-600">
+                <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+                  <tr>
+                    <th class="px-4 py-3">Student Name</th>
+                    <th class="px-4 py-3">Roll No</th>
+                    <th class="px-4 py-3 text-center">Status Toggle</th>
+                  </tr>
+                </thead>
+                <tbody id="attendanceRosterBody" class="divide-y">
+                </tbody>
+              </table>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+              <span class="text-xs text-slate-400" id="attendanceSummaryText">0 Students Listed</span>
+              <button onclick="saveAttendance()" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition">
+                <i class="fa-solid fa-floppy-disk mr-2"></i>Save Attendance
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Batch Slots Summary (1 Col) -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+            <h3 class="font-bold text-lg text-slate-800 border-b pb-3"><i class="fa-solid fa-layer-group text-brand-lightBlue mr-2"></i>Active Batch Slots</h3>
+            <div id="teacherSlotsList" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEACHER: TESTS TAB -->
+      <div id="teacherTestsTab" class="hidden space-y-6">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">Test & Marks Portal</h2>
+            <p class="text-sm text-slate-500">Create new tests and input student scores per batch slot.</p>
+          </div>
+          <button onclick="openModal('createTestModal')" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition">
+            <i class="fa-solid fa-plus mr-2"></i> Create New Test
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <div class="flex justify-between items-center border-b pb-4">
+            <div>
+              <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-pen-to-square text-brand-lightBlue mr-2"></i>Input / Edit Test Marks</h3>
+              <p class="text-xs text-slate-500">Select a test to enter student marks.</p>
+            </div>
+            <select id="teacherTestSelect" onchange="loadTestMarksEditor()" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-brand-lightBlue focus:border-brand-lightBlue p-2.5 font-medium">
+            </select>
+          </div>
+
+          <!-- Marks Editor Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-slate-600">
+              <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+                <tr>
+                  <th class="px-4 py-3">Student Name</th>
+                  <th class="px-4 py-3">Roll No</th>
+                  <th class="px-4 py-3 text-center">Marks Obtained</th>
+                  <th class="px-4 py-3 text-center">Max Marks</th>
+                </tr>
+              </thead>
+              <tbody id="testMarksEditorBody" class="divide-y">
+              </tbody>
+            </table>
+          </div>
+          <div class="flex justify-between items-center pt-2">
+            <span class="text-xs text-slate-400" id="testMarksSummaryText">0 Records Loaded</span>
+            <button onclick="saveTestMarks()" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition">
+              <i class="fa-solid fa-floppy-disk mr-2"></i>Save Marks
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= STUDENT DASHBOARD ================= -->
+    <div id="studentDashboard" class="hidden space-y-6">
+      
+      <!-- STUDENT: OVERVIEW TAB -->
+      <div id="studentOverviewTab" class="space-y-6">
+        <!-- Student Header Bar -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">Student Portal</h2>
+            <p class="text-sm text-slate-500">View enrolled slots, mark attendance records, and access study materials.</p>
+          </div>
+          <button onclick="openModal('joinBatchModal')" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center shadow transition">
+            <i class="fa-solid fa-key mr-2"></i> Join Batch with Code
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Main Feed (2 Cols) -->
+          <div class="lg:col-span-2 space-y-4">
+            <h3 class="font-bold text-lg text-slate-800 flex items-center">
+              <i class="fa-solid fa-bullhorn text-brand-lightBlue mr-2"></i> Class Feed & Materials
+            </h3>
+            <div id="studentFeedList" class="space-y-4">
+            </div>
+          </div>
+
+          <!-- Enrolled Batches Sidebar (1 Col) -->
+          <div class="space-y-4">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+              <h3 class="font-bold text-lg text-slate-800 border-b pb-3">
+                <i class="fa-solid fa-book-bookmark text-brand-lightBlue mr-2"></i> My Joined Batches
+              </h3>
+              <div id="studentBatchesList" class="space-y-3">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STUDENT: TESTS TAB -->
+      <div id="studentTestsTab" class="hidden space-y-6">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h2 class="text-2xl font-bold text-slate-800">My Test Performance</h2>
+          <p class="text-sm text-slate-500">Track scores and evaluated test marks for your enrolled batch slots.</p>
+        </div>
+
+        <div id="studentTestResultsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamic Student Test Result Cards -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Modal: Create New Slot -->
+  <div id="createSlotModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="font-bold text-lg text-slate-800">Create New Tuition Slot</h3>
+        <button onclick="closeModal('createSlotModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handleCreateSlot(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Slot Name / Class Title</label>
+          <input type="text" id="slotTitleInput" required placeholder="e.g., Class 12 - Applied Math" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Batch Timing</label>
+          <input type="text" id="slotTimingInput" required placeholder="e.g., Mon/Wed/Fri - 4:00 PM to 5:30 PM" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('createSlotModal')" class="px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="bg-brand-blue hover:bg-blue-900 text-white px-4 py-2 rounded-xl text-sm font-semibold">Create Slot</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create Test -->
+  <div id="createTestModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="font-bold text-lg text-slate-800">Create New Tuition Test</h3>
+        <button onclick="closeModal('createTestModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handleCreateTest(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Batch Slot</label>
+          <select id="testTargetSlot" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Test Name / Title</label>
+          <input type="text" id="testTitleInput" required placeholder="e.g., Weekly Test 1 - Calculus" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Maximum Marks</label>
+          <input type="number" id="testMaxMarksInput" required value="50" min="1" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('createTestModal')" class="px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="bg-brand-blue hover:bg-blue-900 text-white px-4 py-2 rounded-xl text-sm font-semibold">Create Test</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Post Notes/Homework -->
+  <div id="postContentModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="font-bold text-lg text-slate-800">Upload Notes / Homework / Post</h3>
+        <button onclick="closeModal('postContentModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handlePostContent(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Batch Slot</label>
+          <select id="postTargetSlot" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Post Type</label>
+          <select id="postType" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none">
+            <option value="Notes">📄 Study Notes</option>
+            <option value="Homework">📝 Homework Assignment</option>
+            <option value="Announcement">📢 Announcement</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Title</label>
+          <input type="text" id="postTitle" required placeholder="e.g., Chapter 4 Integration Practice Sheet" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Details / Instructions</label>
+          <textarea id="postContent" rows="3" required placeholder="Write details or paste download links here..." class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"></textarea>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('postContentModal')" class="px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="bg-brand-blue hover:bg-blue-900 text-white px-4 py-2 rounded-xl text-sm font-semibold">Publish Post</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Join Batch (Student) -->
+  <div id="joinBatchModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="font-bold text-lg text-slate-800">Join Batch Slot</h3>
+        <button onclick="closeModal('joinBatchModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handleJoinBatch(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Enter 6-Digit Join Code</label>
+          <input type="text" id="batchCodeInput" maxlength="6" required placeholder="e.g., MATH12" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm font-mono tracking-widest text-center uppercase text-lg focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('joinBatchModal')" class="px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="bg-brand-blue hover:bg-blue-900 text-white px-4 py-2 rounded-xl text-sm font-semibold">Join Batch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Initial State Application Data
+    const appState = {
+      currentRole: 'teacher',
+      currentTab: 'overview',
+      slots: [
+        { id: 'slot-1', title: 'Class 12 - Applied Math', timing: 'Mon/Wed/Fri - 4:00 PM', code: 'MATH12' },
+        { id: 'slot-2', title: 'Class 11 - Accountancy', timing: 'Tue/Thu/Sat - 5:30 PM', code: 'ACCT11' }
+      ],
+      students: [
+        { id: 'std-1', name: 'Aarav Sharma', roll: '101', enrolledSlots: ['slot-1', 'slot-2'] },
+        { id: 'std-2', name: 'Riya Gupta', roll: '102', enrolledSlots: ['slot-1'] },
+        { id: 'std-3', name: 'Kaviraj Singh', roll: '103', enrolledSlots: ['slot-1', 'slot-2'] },
+        { id: 'std-4', name: 'Ananya Verma', roll: '104', enrolledSlots: ['slot-2'] }
+      ],
+      attendance: {
+        'slot-1': { 'std-1': true, 'std-2': true, 'std-3': false },
+        'slot-2': { 'std-1': true, 'std-3': true, 'std-4': true }
+      },
+      tests: [
+        {
+          id: 'test-1',
+          slotId: 'slot-1',
+          title: 'Unit Test 1 - Determinants',
+          maxMarks: 50,
+          marks: {
+            'std-1': 42,
+            'std-2': 38,
+            'std-3': 28
+          }
+        },
+        {
+          id: 'test-2',
+          slotId: 'slot-2',
+          title: 'Class Test - Journal Entries',
+          maxMarks: 25,
+          marks: {
+            'std-1': 23,
+            'std-3': 19,
+            'std-4': 21
+          }
+        }
+      ],
+      posts: [
+        {
+          id: 'post-1',
+          slotId: 'slot-1',
+          type: 'Homework',
+          title: 'Matrices & Determinants Worksheet 2',
+          content: 'Complete questions 1 through 15 from Chapter 3 supplement. Bring physical copies to class on Friday.',
+          thumbsUp: 5,
+          thumbsDown: 0,
+          date: 'Yesterday'
+        }
+      ]
+    };
+
+    // Role Switcher
+    function switchRole(role) {
+      appState.currentRole = role;
+      const btnTeacher = document.getElementById('btnRoleTeacher');
+      const btnStudent = document.getElementById('btnRoleStudent');
+      const teacherDash = document.getElementById('teacherDashboard');
+      const studentDash = document.getElementById('studentDashboard');
+
+      if (role === 'teacher') {
+        btnTeacher.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-brand-blue shadow";
+        btnStudent.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 text-blue-100 hover:text-white";
+        teacherDash.classList.remove('hidden');
+        studentDash.classList.add('hidden');
+        renderTeacherView();
+      } else {
+        btnStudent.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-brand-blue shadow";
+        btnTeacher.className = "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 text-blue-100 hover:text-white";
+        studentDash.classList.remove('hidden');
+        teacherDash.classList.add('hidden');
+        renderStudentView();
+      }
+    }
+
+    // Sub-tab Navigation Switcher
+    function switchTab(tab) {
+      appState.currentTab = tab;
+      const tabOverviewBtn = document.getElementById('tabOverviewBtn');
+      const tabTestsBtn = document.getElementById('tabTestsBtn');
+
+      if (tab === 'overview') {
+        tabOverviewBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50";
+        tabTestsBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue";
+        
+        document.getElementById('teacherOverviewTab').classList.remove('hidden');
+        document.getElementById('teacherTestsTab').classList.add('hidden');
+        document.getElementById('studentOverviewTab').classList.remove('hidden');
+        document.getElementById('studentTestsTab').classList.add('hidden');
+      } else {
+        tabTestsBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50";
+        tabOverviewBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue";
+        
+        document.getElementById('teacherOverviewTab').classList.add('hidden');
+        document.getElementById('teacherTestsTab').classList.remove('hidden');
+        document.getElementById('studentOverviewTab').classList.add('hidden');
+        document.getElementById('studentTestsTab').classList.remove('hidden');
+      }
+
+      if (appState.currentRole === 'teacher') renderTeacherView();
+      else renderStudentView();
+    }
+
+    // Helpers
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function generateCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+
+    // --- TEACHER ACTIONS ---
+    function handleCreateSlot(e) {
+      e.preventDefault();
+      const title = document.getElementById('slotTitleInput').value.trim();
+      const timing = document.getElementById('slotTimingInput').value.trim();
+      
+      const newSlot = { id: 'slot-' + Date.now(), title, timing, code: generateCode() };
+      appState.slots.push(newSlot);
+      appState.attendance[newSlot.id] = {};
+      
+      closeModal('createSlotModal');
+      e.target.reset();
+      renderTeacherView();
+    }
+
+    function handleCreateTest(e) {
+      e.preventDefault();
+      const slotId = document.getElementById('testTargetSlot').value;
+      const title = document.getElementById('testTitleInput').value.trim();
+      const maxMarks = parseInt(document.getElementById('testMaxMarksInput').value, 10);
+
+      if(!slotId) {
+        alert("Please select a batch slot.");
+        return;
+      }
+
+      const newTest = {
+        id: 'test-' + Date.now(),
+        slotId,
+        title,
+        maxMarks,
+        marks: {}
+      };
+
+      appState.tests.push(newTest);
+      closeModal('createTestModal');
+      e.target.reset();
+      renderTeacherView();
+    }
+
+    function renderTeacherView() {
+      // Dropdown updates
+      const slotSelect = document.getElementById('teacherSlotSelect');
+      const postSelect = document.getElementById('postTargetSlot');
+      const testSelect = document.getElementById('testTargetSlot');
+      
+      [slotSelect, postSelect, testSelect].forEach(sel => sel.innerHTML = '');
+
+      appState.slots.forEach(slot => {
+        slotSelect.innerHTML += `<option value="${slot.id}">${slot.title} (${slot.timing})</option>`;
+        postSelect.innerHTML += `<option value="${slot.id}">${slot.title}</option>`;
+        testSelect.innerHTML += `<option value="${slot.id}">${slot.title}</option>`;
+      });
+
+      // Active Slots Card Render
+      const slotsContainer = document.getElementById('teacherSlotsList');
+      slotsContainer.innerHTML = '';
+      appState.slots.forEach(slot => {
+        const enrolledCount = appState.students.filter(s => s.enrolledSlots.includes(slot.id)).length;
+        slotsContainer.innerHTML += `
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <div class="flex justify-between items-start">
+              <h4 class="font-bold text-sm text-slate-800">${slot.title}</h4>
+              <span class="bg-blue-100 text-brand-blue text-[10px] font-mono px-2 py-0.5 rounded font-bold">CODE: ${slot.code}</span>
+            </div>
+            <p class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${slot.timing}</p>
+            <p class="text-xs text-slate-600 font-medium"><i class="fa-solid fa-users mr-1 text-slate-400"></i>${enrolledCount} Enrolled</p>
+          </div>
+        `;
+      });
+
+      loadAttendanceRoster();
+
+      // Test Select update
+      const teacherTestSelect = document.getElementById('teacherTestSelect');
+      teacherTestSelect.innerHTML = '';
+      if(appState.tests.length === 0) {
+        teacherTestSelect.innerHTML = `<option value="">No tests created yet</option>`;
+      } else {
+        appState.tests.forEach(t => {
+          const slot = appState.slots.find(s => s.id === t.slotId);
+          teacherTestSelect.innerHTML += `<option value="${t.id}">${t.title} (${slot ? slot.title : 'Batch'})</option>`;
+        });
+      }
+      loadTestMarksEditor();
+    }
+
+    function loadAttendanceRoster() {
+      const selectedSlotId = document.getElementById('teacherSlotSelect').value;
+      const tbody = document.getElementById('attendanceRosterBody');
+      tbody.innerHTML = '';
+
+      if (!selectedSlotId) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-slate-400">No active slots available.</td></tr>`;
+        return;
+      }
+
+      const enrolledStudents = appState.students.filter(s => s.enrolledSlots.includes(selectedSlotId));
+      document.getElementById('attendanceSummaryText').innerText = `${enrolledStudents.length} Students Enrolled`;
+
+      enrolledStudents.forEach(student => {
+        const isPresent = appState.attendance[selectedSlotId]?.[student.id] !== false;
+        
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="px-4 py-3 font-medium text-slate-800">${student.name}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono text-xs">#${student.roll}</td>
+            <td class="px-4 py-3 text-center">
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" onchange="toggleAttendance('${selectedSlotId}', '${student.id}', this.checked)" ${isPresent ? 'checked' : ''} class="sr-only peer">
+                <div class="relative w-11 h-6 bg-brand-accentRed peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                <span class="ms-2 text-xs font-bold ${isPresent ? 'text-emerald-600' : 'text-brand-accentRed'}" id="status-text-${student.id}">
+                  ${isPresent ? 'PRESENT' : 'ABSENT'}
+                </span>
+              </label>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function toggleAttendance(slotId, studentId, isChecked) {
+      if(!appState.attendance[slotId]) appState.attendance[slotId] = {};
+      appState.attendance[slotId][studentId] = isChecked;
+      const label = document.getElementById(`status-text-${studentId}`);
+      if(label) {
+        label.innerText = isChecked ? 'PRESENT' : 'ABSENT';
+        label.className = `ms-2 text-xs font-bold ${isChecked ? 'text-emerald-600' : 'text-brand-accentRed'}`;
+      }
+    }
+
+    function saveAttendance() { alert("Attendance saved!"); }
+
+    function loadTestMarksEditor() {
+      const testId = document.getElementById('teacherTestSelect').value;
+      const tbody = document.getElementById('testMarksEditorBody');
+      tbody.innerHTML = '';
+
+      if (!testId) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-400">No tests available.</td></tr>`;
+        return;
+      }
+
+      const test = appState.tests.find(t => t.id === testId);
+      if(!test) return;
+
+      const enrolledStudents = appState.students.filter(s => s.enrolledSlots.includes(test.slotId));
+      document.getElementById('testMarksSummaryText').innerText = `${enrolledStudents.length} Students for ${test.title}`;
+
+      enrolledStudents.forEach(student => {
+        const score = test.marks[student.id] !== undefined ? test.marks[student.id] : '';
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 font-medium text-slate-800">${student.name}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono text-xs">#${student.roll}</td>
+            <td class="px-4 py-3 text-center">
+              <input type="number" max="${test.maxMarks}" min="0" value="${score}" onchange="updateStudentMark('${test.id}', '${student.id}', this.value)" class="w-20 text-center border border-slate-300 p-1.5 rounded-lg text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none font-bold" />
+            </td>
+            <td class="px-4 py-3 text-center text-slate-500 font-semibold">${test.maxMarks}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function updateStudentMark(testId, studentId, val) {
+      const test = appState.tests.find(t => t.id === testId);
+      if(test) test.marks[studentId] = val === '' ? 0 : parseFloat(val);
+    }
+
+    function saveTestMarks() { alert("Test marks saved successfully!"); }
+
+    function handlePostContent(e) {
+      e.preventDefault();
+      const slotId = document.getElementById('postTargetSlot').value;
+      const type = document.getElementById('postType').value;
+      const title = document.getElementById('postTitle').value.trim();
+      const content = document.getElementById('postContent').value.trim();
+
+      appState.posts.unshift({
+        id: 'post-' + Date.now(),
+        slotId, type, title, content, thumbsUp: 0, thumbsDown: 0, date: 'Just now'
+      });
+
+      closeModal('postContentModal');
+      e.target.reset();
+      alert("Post published!");
+    }
+
+    // --- STUDENT ACTIONS ---
+    function renderStudentView() {
+      // Feed
+      const feedContainer = document.getElementById('studentFeedList');
+      feedContainer.innerHTML = '';
+      appState.posts.forEach(post => {
+        const slot = appState.slots.find(s => s.id === post.slotId);
+        const badgeColor = post.type === 'Homework' ? 'bg-red-100 text-brand-accentRed' : (post.type === 'Notes' ? 'bg-blue-100 text-brand-lightBlue' : 'bg-amber-100 text-amber-700');
+        
+        feedContainer.innerHTML += `
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${badgeColor}">${post.type}</span>
+            <h4 class="font-bold text-base text-slate-800 pt-1">${post.title}</h4>
+            <p class="text-xs text-slate-400"><i class="fa-solid fa-bookmark mr-1"></i>${slot ? slot.title : 'Batch'} • ${post.date}</p>
+            <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">${post.content}</p>
+            <div class="flex items-center gap-3 pt-1 border-t border-slate-100">
+              <button onclick="reactPost('${post.id}', 'up')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-up"></i><span>${post.thumbsUp}</span></button>
+              <button onclick="reactPost('${post.id}', 'down')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-down"></i><span>${post.thumbsDown}</span></button>
+            </div>
+          </div>
+        `;
+      });
+
+      // Joined Batches
+      const currentStudent = appState.students[0]; // Aarav
+      const enrolled = appState.slots.filter(s => currentStudent.enrolledSlots.includes(s.id));
+      const studentBatchesList = document.getElementById('studentBatchesList');
+      studentBatchesList.innerHTML = '';
+      enrolled.forEach(slot => {
+        studentBatchesList.innerHTML += `
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <h4 class="font-bold text-sm text-slate-800">${slot.title}</h4>
+            <p class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${slot.timing}</p>
+          </div>
+        `;
+      });
+
+      // Render Student Test Marks
+      const studentTestResultsList = document.getElementById('studentTestResultsList');
+      studentTestResultsList.innerHTML = '';
+
+      const studentTests = appState.tests.filter(t => currentStudent.enrolledSlots.includes(t.slotId));
+
+      if (studentTests.length === 0) {
+        studentTestResultsList.innerHTML = `<div class="col-span-2 bg-white p-6 rounded-2xl text-center text-slate-400">No tests assigned yet for your batches.</div>`;
+      } else {
+        studentTests.forEach(test => {
+          const slot = appState.slots.find(s => s.id === test.slotId);
+          const score = test.marks[currentStudent.id];
+          const hasScore = score !== undefined;
+          const percentage = hasScore ? Math.round((score / test.maxMarks) * 100) : 0;
+          
+          let scoreBadge = "bg-slate-100 text-slate-600";
+          if (hasScore) {
+            scoreBadge = percentage >= 75 ? "bg-emerald-100 text-emerald-700" : (percentage >= 40 ? "bg-blue-100 text-brand-blue" : "bg-red-100 text-brand-accentRed");
+          }
+
+          studentTestResultsList.innerHTML += `
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${slot ? slot.title : 'Tuition Batch'}</span>
+                  <h4 class="font-bold text-base text-slate-800">${test.title}</h4>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-bold ${scoreBadge}">
+                  ${hasScore ? `${percentage}%` : 'Pending'}
+                </span>
+              </div>
+              <div class="bg-slate-50 p-4 rounded-xl flex justify-between items-center border border-slate-100">
+                <span class="text-xs font-semibold text-slate-500">Marks Obtained</span>
+                <span class="text-xl font-black text-slate-800">
+                  ${hasScore ? score : '--'} <span class="text-sm font-normal text-slate-400">/ ${test.maxMarks}</span>
+                </span>
+              </div>
+            </div>
+          `;
+        });
+      }
+    }
+
+    function reactPost(postId, type) {
+      const post = appState.posts.find(p => p.id === postId);
+      if(post) {
+        if(type === 'up') post.thumbsUp++;
+        if(type === 'down') post.thumbsDown++;
+        renderStudentView();
+      }
+    }
+
+    function handleJoinBatch(e) {
+      e.preventDefault();
+      const code = document.getElementById('batchCodeInput').value.trim().toUpperCase();
+      const matchedSlot = appState.slots.find(s => s.code === code);
+
+      if(!matchedSlot) {
+        alert("Invalid Batch Code.");
+        return;
+      }
+
+      const currentStudent = appState.students[0];
+      if(!currentStudent.enrolledSlots.includes(matchedSlot.id)) {
+        currentStudent.enrolledSlots.push(matchedSlot.id);
+        alert(`Joined ${matchedSlot.title}!`);
+      } else {
+        alert("You are already enrolled.");
+      }
+
+      closeModal('joinBatchModal');
+      e.target.reset();
+      renderStudentView();
+    }
+
+    // Initialize View
+    renderTeacherView();
+  </script>
+</body>
+</html>

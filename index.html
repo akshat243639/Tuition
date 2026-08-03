@@ -47,9 +47,18 @@
       <p id="authSubtitle" class="text-xs text-slate-500">Sign in to access your tuition portal</p>
     </div>
     <form id="authForm" class="space-y-4">
-      <div>
-        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Full Name</label>
-        <input type="text" id="authName" placeholder="Your name" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+      <div id="signupFields" class="hidden space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Full Name</label>
+          <input type="text" id="authName" placeholder="Your name" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Account Role</label>
+          <select id="authRole" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none">
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
       </div>
       <div>
         <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email Address</label>
@@ -59,16 +68,8 @@
         <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
         <input type="password" id="authPassword" required placeholder="At least 6 characters" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
       </div>
-      <div id="roleSelectGroup" class="hidden">
-        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Account Role</label>
-        <select id="authRole" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none">
-          <option value="student">Student</option>
-          <option value="teacher">Teacher</option>
-        </select>
-      </div>
       <button type="submit" id="authSubmitBtn" class="w-full bg-brand-blue hover:bg-blue-900 text-white font-bold py-2.5 rounded-xl text-sm shadow transition">Sign In</button>
     </form>
-    <div id="authNameGroupWrap" class="hidden"></div>
     <div class="text-center border-t pt-4">
       <button type="button" id="toggleAuthModeBtn" class="text-xs font-bold text-brand-lightBlue hover:underline p-2">Don't have an account? Sign Up</button>
     </div>
@@ -244,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authSubtitle').innerText = isSignUpMode ? "Sign up to access your tuition portal" : "Sign in to access your tuition portal";
     document.getElementById('authSubmitBtn').innerText = isSignUpMode ? "Sign Up" : "Sign In";
     document.getElementById('toggleAuthModeBtn').innerText = isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up";
-    document.getElementById('roleSelectGroup').classList.toggle('hidden', !isSignUpMode);
+    document.getElementById('signupFields').classList.toggle('hidden', !isSignUpMode);
   });
 
   document.getElementById('authForm').addEventListener('submit', handleAuthSubmit);
@@ -285,14 +286,17 @@ async function handleAuthSubmit(e){
   clearAuthError();
   const email = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value.trim();
-  const fullName = document.getElementById('authName').value.trim();
-  const role = document.getElementById('authRole').value;
   const btn = document.getElementById('authSubmitBtn');
 
   try {
     btn.disabled = true; btn.innerText = "Please wait...";
 
     if (isSignUpMode) {
+      const nameInput = document.getElementById('authName');
+      const roleInput = document.getElementById('authRole');
+      const fullName = nameInput ? nameInput.value.trim() : '';
+      const role = roleInput ? roleInput.value : 'student';
+
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) { showAuthError("Signup failed: " + error.message); return; }
       if (!data.user) { showAuthError("Signup did not return a user. Try again."); return; }
@@ -324,10 +328,9 @@ async function checkSession(){
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
     currentUser = session.user;
-    let { data: profile, error } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+    let { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
 
     if (!profile) {
-      // Profile row missing (e.g. created before this schema) — create a fallback
       await supabase.from('profiles').insert([{ id: currentUser.id, email: currentUser.email, role: 'student', full_name: currentUser.email.split('@')[0] }]);
       const retry = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
       profile = retry.data;
@@ -386,7 +389,6 @@ async function loadAllSupabaseData(){
   }
 
   if (currentUserRole === 'teacher') {
-    // Load all students enrolled across teacher's slots (per-slot lookup happens in loadAttendanceRoster)
     renderTeacherView();
   } else {
     renderStudentView();
@@ -587,7 +589,7 @@ async function saveAttendance(){
   alert("Attendance saved!");
 }
 
-function loadTestMarksEditor(){
+async function loadTestMarksEditor(){
   const testId = document.getElementById('teacherTestSelect').value;
   const tbody = document.getElementById('testMarksEditorBody');
   tbody.innerHTML = '';
@@ -599,11 +601,13 @@ function loadTestMarksEditor(){
   const test = appState.tests.find(t => t.id === testId);
   if (!test) return;
 
-  const students = appState.enrolledStudents.length ? appState.enrolledStudents : [];
+  const { data: enrollments } = await supabase.from('enrollments').select('*, profiles(*)').eq('slot_id', test.slot_id);
+  const students = (enrollments || []).map(e => e.profiles).filter(Boolean);
+
   document.getElementById('testMarksSummaryText').innerText = `${students.length} Students`;
 
   if (students.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">Select the matching slot under Attendance first to load its roster.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">No students enrolled in this test\'s batch slot yet.</td></tr>';
     return;
   }
 
@@ -613,7 +617,7 @@ function loadTestMarksEditor(){
       <tr class="hover:bg-slate-50 transition">
         <td class="px-4 py-3 font-medium text-slate-800">${student.full_name || student.email}</td>
         <td class="px-4 py-3 text-center">
-          <input type="number" max="${test.max_marks}" min="0" value="${score}" onchange="updateStudentMark('${test.id}', '${student.id}', this.value)" class="w-20 text-center border p-1.5 rounded-lg text-sm font-bold" />
+          <input type="number" max="${test.max_marks}" min="0" value="${score}" onchange="updateStudentMark('${test.id}', '${student.id}', this.value)" class="w-20 text-center border p-1.5 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-brand-lightBlue" />
         </td>
         <td class="px-4 py-3 text-center font-semibold">${test.max_marks}</td>
       </tr>`;

@@ -325,4 +325,419 @@
       </div>
       <form onsubmit="handleJoinBatch(event)" class="space-y-3">
         <div>
-          <label class="block text-xs font-s
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Enter 6-Digit Join Code</label>
+          <input type="text" id="batchCodeInput" maxlength="6" required placeholder="e.g., MATH12" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm font-mono tracking-widest text-center uppercase text-lg focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('joinBatchModal')" class="px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Join Batch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT & SUPABASE AUTH LOGIC -->
+  <script>
+    const SUPABASE_URL = 'https://adxzqbaosvadpchrdshe.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeHpxYmFvc3ZhZHBjaHJkc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MzE0MjcsImV4cCI6MjEwMTMwNzQyN30.9wkzGmtlVf9Fv1Zpant2Q-FDYnOLi6QBs6ERqrSSOFo';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let isSignUpMode = false;
+    let currentUser = null;
+    let currentUserRole = null;
+
+    const appState = {
+      slots: [],
+      students: [
+        { id: 'std-1', name: 'Aarav Sharma', roll: '101' },
+        { id: 'std-2', name: 'Riya Gupta', roll: '102' }
+      ],
+      attendance: {},
+      tests: [],
+      posts: []
+    };
+
+    // --- AUTH LOGIC ---
+    function toggleAuthMode() {
+      isSignUpMode = !isSignUpMode;
+      document.getElementById('authTitle').innerText = isSignUpMode ? "Create Account" : "Welcome Back";
+      document.getElementById('authSubtitle').innerText = isSignUpMode ? "Sign up to access your tuition portal" : "Sign in to access your tuition portal";
+      document.getElementById('authSubmitBtn').innerText = isSignUpMode ? "Sign Up" : "Sign In";
+      document.getElementById('toggleAuthModeBtn').innerText = isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up";
+      
+      const roleGroup = document.getElementById('roleSelectGroup');
+      if (isSignUpMode) roleGroup.classList.remove('hidden');
+      else roleGroup.classList.add('hidden');
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value.trim();
+      const role = document.getElementById('authRole').value;
+
+      if (isSignUpMode) {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) return alert("Signup Failed: " + error.message);
+
+        if (data.user) {
+          await supabase.from('profiles').insert([{ id: data.user.id, email, role }]);
+          alert("Account created successfully! Logging you in...");
+          checkSession();
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return alert("Login Failed: " + error.message);
+        checkSession();
+      }
+    }
+
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+        
+        currentUserRole = profile ? profile.role : 'student';
+        
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+        document.getElementById('authHeader').classList.remove('hidden');
+        document.getElementById('authHeader').classList.add('flex');
+        document.getElementById('userBadge').innerText = `${currentUser.email} (${currentUserRole.toUpperCase()})`;
+
+        if (currentUserRole === 'teacher') {
+          document.getElementById('teacherDashboard').classList.remove('hidden');
+          document.getElementById('studentDashboard').classList.add('hidden');
+        } else {
+          document.getElementById('studentDashboard').classList.remove('hidden');
+          document.getElementById('teacherDashboard').classList.add('hidden');
+        }
+
+        await loadAllSupabaseData();
+      } else {
+        document.getElementById('authSection').classList.remove('hidden');
+        document.getElementById('appSection').classList.add('hidden');
+        document.getElementById('authHeader').classList.add('hidden');
+      }
+    }
+
+    async function handleLogout() {
+      await supabase.auth.signOut();
+      window.location.reload();
+    }
+
+    // --- DATA FETCHING ---
+    async function loadAllSupabaseData() {
+      const { data: slots } = await supabase.from('slots').select('*');
+      if (slots) appState.slots = slots;
+
+      const { data: posts } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+      if (posts) appState.posts = posts;
+
+      const { data: tests } = await supabase.from('tests').select('*');
+      if (tests) {
+        appState.tests = tests;
+        for (let test of appState.tests) {
+          test.marks = {};
+          const { data: marks } = await supabase.from('test_marks').select('*').eq('test_id', test.id);
+          if (marks) marks.forEach(m => test.marks[m.student_name] = m.marks_obtained);
+        }
+      }
+
+      if (currentUserRole === 'teacher') renderTeacherView();
+      else renderStudentView();
+    }
+
+    function switchTab(tab) {
+      const tabOverviewBtn = document.getElementById('tabOverviewBtn');
+      const tabTestsBtn = document.getElementById('tabTestsBtn');
+
+      if (tab === 'overview') {
+        tabOverviewBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50";
+        tabTestsBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue";
+        document.getElementById('teacherOverviewTab').classList.remove('hidden');
+        document.getElementById('teacherTestsTab').classList.add('hidden');
+        document.getElementById('studentOverviewTab').classList.remove('hidden');
+        document.getElementById('studentTestsTab').classList.add('hidden');
+      } else {
+        tabTestsBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50";
+        tabOverviewBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue";
+        document.getElementById('teacherOverviewTab').classList.add('hidden');
+        document.getElementById('teacherTestsTab').classList.remove('hidden');
+        document.getElementById('studentOverviewTab').classList.add('hidden');
+        document.getElementById('studentTestsTab').classList.remove('hidden');
+      }
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function generateCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+
+    // --- TEACHER FUNCTIONS ---
+    async function handleCreateSlot(e) {
+      e.preventDefault();
+      const title = document.getElementById('slotTitleInput').value.trim();
+      const timing = document.getElementById('slotTimingInput').value.trim();
+      await supabase.from('slots').insert([{ title, timing, code: generateCode() }]);
+      closeModal('createSlotModal');
+      e.target.reset();
+      await loadAllSupabaseData();
+    }
+
+    async function handleCreateTest(e) {
+      e.preventDefault();
+      const slotId = document.getElementById('testTargetSlot').value;
+      const title = document.getElementById('testTitleInput').value.trim();
+      const maxMarks = parseInt(document.getElementById('testMaxMarksInput').value, 10);
+      await supabase.from('tests').insert([{ slot_id: slotId, title, max_marks: maxMarks }]);
+      closeModal('createTestModal');
+      e.target.reset();
+      await loadAllSupabaseData();
+    }
+
+    async function handlePostContent(e) {
+      e.preventDefault();
+      const btn = document.getElementById('postSubmitBtn');
+      btn.innerText = "Uploading...";
+      btn.disabled = true;
+
+      const slotId = document.getElementById('postTargetSlot').value;
+      const type = document.getElementById('postType').value;
+      const title = document.getElementById('postTitle').value.trim();
+      const content = document.getElementById('postContent').value.trim();
+      const fileInput = document.getElementById('postFileInput');
+
+      let fileUrl = null;
+      let fileName = null;
+
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        fileName = file.name;
+        const filePath = `${Date.now()}_${file.name}`;
+        const { data: uploadData, error: uploadErr } = await supabase.storage.from('class-files').upload(filePath, file);
+
+        if (!uploadErr) {
+          const { data: publicUrlData } = supabase.storage.from('class-files').getPublicUrl(filePath);
+          fileUrl = publicUrlData.publicUrl;
+        } else {
+          alert("File Upload Warning: " + uploadErr.message);
+        }
+      }
+
+      await supabase.from('posts').insert([{ slot_id: slotId, type, title, content, file_url: fileUrl, file_name: fileName }]);
+
+      btn.innerText = "Publish Post";
+      btn.disabled = false;
+      closeModal('postContentModal');
+      e.target.reset();
+      await loadAllSupabaseData();
+    }
+
+    function renderTeacherView() {
+      const slotSelect = document.getElementById('teacherSlotSelect');
+      const postSelect = document.getElementById('postTargetSlot');
+      const testSelect = document.getElementById('testTargetSlot');
+      [slotSelect, postSelect, testSelect].forEach(sel => sel.innerHTML = '');
+
+      appState.slots.forEach(slot => {
+        slotSelect.innerHTML += `<option value="${slot.id}">${slot.title} (${slot.timing})</option>`;
+        postSelect.innerHTML += `<option value="${slot.id}">${slot.title}</option>`;
+        testSelect.innerHTML += `<option value="${slot.id}">${slot.title}</option>`;
+      });
+
+      const slotsContainer = document.getElementById('teacherSlotsList');
+      slotsContainer.innerHTML = '';
+      appState.slots.forEach(slot => {
+        slotsContainer.innerHTML += `
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <div class="flex justify-between items-start">
+              <h4 class="font-bold text-sm text-slate-800">${slot.title}</h4>
+              <span class="bg-blue-100 text-brand-blue text-[10px] font-mono px-2 py-0.5 rounded font-bold">CODE: ${slot.code}</span>
+            </div>
+            <p class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${slot.timing}</p>
+          </div>
+        `;
+      });
+
+      loadAttendanceRoster();
+
+      const teacherTestSelect = document.getElementById('teacherTestSelect');
+      teacherTestSelect.innerHTML = '';
+      appState.tests.forEach(t => {
+        const slot = appState.slots.find(s => s.id === t.slot_id);
+        teacherTestSelect.innerHTML += `<option value="${t.id}">${t.title} (${slot ? slot.title : 'Batch'})</option>`;
+      });
+      loadTestMarksEditor();
+    }
+
+    function loadAttendanceRoster() {
+      const selectedSlotId = document.getElementById('teacherSlotSelect').value;
+      const tbody = document.getElementById('attendanceRosterBody');
+      tbody.innerHTML = '';
+      if (!selectedSlotId) return;
+
+      document.getElementById('attendanceSummaryText').innerText = `${appState.students.length} Students Listed`;
+
+      appState.students.forEach(student => {
+        const isPresent = appState.attendance[selectedSlotId]?.[student.id] !== false;
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 font-medium text-slate-800">${student.name}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono text-xs">#${student.roll}</td>
+            <td class="px-4 py-3 text-center">
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" onchange="toggleAttendance('${selectedSlotId}', '${student.id}', this.checked)" ${isPresent ? 'checked' : ''} class="sr-only peer">
+                <div class="relative w-11 h-6 bg-brand-accentRed rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                <span class="ms-2 text-xs font-bold ${isPresent ? 'text-emerald-600' : 'text-brand-accentRed'}">${isPresent ? 'PRESENT' : 'ABSENT'}</span>
+              </label>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function toggleAttendance(slotId, studentId, isChecked) {
+      if (!appState.attendance[slotId]) appState.attendance[slotId] = {};
+      appState.attendance[slotId][studentId] = isChecked;
+    }
+
+    function saveAttendance() { alert("Attendance saved!"); }
+
+    function loadTestMarksEditor() {
+      const testId = document.getElementById('teacherTestSelect').value;
+      const tbody = document.getElementById('testMarksEditorBody');
+      tbody.innerHTML = '';
+      if (!testId) return;
+
+      const test = appState.tests.find(t => t.id === testId);
+      if (!test) return;
+
+      document.getElementById('testMarksSummaryText').innerText = `${appState.students.length} Students`;
+
+      appState.students.forEach(student => {
+        const score = test.marks && test.marks[student.name] !== undefined ? test.marks[student.name] : '';
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 font-medium text-slate-800">${student.name}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono text-xs">#${student.roll}</td>
+            <td class="px-4 py-3 text-center">
+              <input type="number" max="${test.max_marks}" min="0" value="${score}" onchange="updateStudentMark('${test.id}', '${student.name}', this.value)" class="w-20 text-center border p-1.5 rounded-lg text-sm font-bold" />
+            </td>
+            <td class="px-4 py-3 text-center font-semibold">${test.max_marks}</td>
+          </tr>
+        `;
+      });
+    }
+
+    async function updateStudentMark(testId, studentName, val) {
+      const numVal = val === '' ? 0 : parseFloat(val);
+      await supabase.from('test_marks').upsert({ test_id: testId, student_name: studentName, marks_obtained: numVal });
+    }
+
+    function saveTestMarks() { alert("Marks saved!"); }
+
+    // --- STUDENT FUNCTIONS ---
+    function renderStudentView() {
+      const feedContainer = document.getElementById('studentFeedList');
+      feedContainer.innerHTML = '';
+
+      appState.posts.forEach(post => {
+        const slot = appState.slots.find(s => s.id === post.slot_id);
+        const badgeColor = post.type === 'Homework' ? 'bg-red-100 text-brand-accentRed' : (post.type === 'Notes' ? 'bg-blue-100 text-brand-lightBlue' : 'bg-amber-100 text-amber-700');
+        
+        let attachmentHtml = '';
+        if (post.file_url) {
+          const isImg = post.file_name && post.file_name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+          if (isImg) {
+            attachmentHtml = `<div class="pt-2"><img src="${post.file_url}" alt="Attachment" class="max-h-60 rounded-xl border border-slate-200 object-cover"/></div>`;
+          } else {
+            attachmentHtml = `
+              <div class="pt-2">
+                <a href="${post.file_url}" target="_blank" download class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 transition">
+                  <i class="fa-solid fa-file-pdf text-red-500 text-sm"></i> Download ${post.file_name || 'Attachment'}
+                </a>
+              </div>
+            `;
+          }
+        }
+
+        feedContainer.innerHTML += `
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${badgeColor}">${post.type}</span>
+            <h4 class="font-bold text-base text-slate-800 pt-1">${post.title}</h4>
+            <p class="text-xs text-slate-400"><i class="fa-solid fa-bookmark mr-1"></i>${slot ? slot.title : 'Batch'}</p>
+            <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">${post.content}</p>
+            ${attachmentHtml}
+            <div class="flex items-center gap-3 pt-1 border-t border-slate-100">
+              <button onclick="reactPost('${post.id}', 'up')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-up"></i><span>${post.thumbs_up || 0}</span></button>
+              <button onclick="reactPost('${post.id}', 'down')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-down"></i><span>${post.thumbs_down || 0}</span></button>
+            </div>
+          </div>
+        `;
+      });
+
+      const studentBatchesList = document.getElementById('studentBatchesList');
+      studentBatchesList.innerHTML = '';
+      appState.slots.forEach(slot => {
+        studentBatchesList.innerHTML += `
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <h4 class="font-bold text-sm text-slate-800">${slot.title}</h4>
+            <p class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${slot.timing}</p>
+          </div>
+        `;
+      });
+
+      const studentTestResultsList = document.getElementById('studentTestResultsList');
+      studentTestResultsList.innerHTML = '';
+      appState.tests.forEach(test => {
+        const slot = appState.slots.find(s => s.id === test.slot_id);
+        const score = test.marks ? test.marks['Aarav Sharma'] : undefined;
+        const hasScore = score !== undefined;
+        const percentage = hasScore ? Math.round((score / test.max_marks) * 100) : 0;
+        
+        let scoreBadge = hasScore ? (percentage >= 75 ? "bg-emerald-100 text-emerald-700" : (percentage >= 40 ? "bg-blue-100 text-brand-blue" : "bg-red-100 text-brand-accentRed")) : "bg-slate-100 text-slate-600";
+
+        studentTestResultsList.innerHTML += `
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${slot ? slot.title : 'Tuition Batch'}</span>
+                <h4 class="font-bold text-base text-slate-800">${test.title}</h4>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold ${scoreBadge}">${hasScore ? `${percentage}%` : 'Pending'}</span>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-xl flex justify-between items-center border border-slate-100">
+              <span class="text-xs font-semibold text-slate-500">Marks Obtained</span>
+              <span class="text-xl font-black text-slate-800">${hasScore ? score : '--'} <span class="text-sm font-normal text-slate-400">/ ${test.max_marks}</span></span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    async function reactPost(postId, type) {
+      const post = appState.posts.find(p => p.id === postId);
+      if (post) {
+        const count = type === 'up' ? (post.thumbs_up || 0) + 1 : (post.thumbs_down || 0) + 1;
+        const field = type === 'up' ? 'thumbs_up' : 'thumbs_down';
+        await supabase.from('posts').update({ [field]: count }).eq('id', postId);
+        await loadAllSupabaseData();
+      }
+    }
+
+    function handleJoinBatch(e) {
+      e.preventDefault();
+      const code = document.getElementById('batchCodeInput').value.trim().toUpperCase();
+      const matchedSlot = appState.slots.find(s => s.code === code);
+      if (!matchedSlot) return alert("Invalid Batch Code.");
+      alert(`Joined ${matchedSlot.title}!`);
+      closeModal('joinBatchModal');
+      e.target.reset();
+    }
+
+    // Check auth session on page load
+    checkSession();
+  </script>
+</body>
+</html>

@@ -1,792 +1,709 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>EduPortal - Coaching Management</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: { blue: '#1E3A8A', lightBlue: '#3B82F6', accentRed: '#EF4444', softBg: '#F8FAFC' }
-          }
-        }
-      }
-    }
-  </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    /* Mobile Touch Fixes */
-    button, input, select, textarea {
-      -webkit-tap-highlight-color: transparent;
-    }
-    input, select, textarea {
-      font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>EduPortal - Coaching Management</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { colors: {
+      brand: { blue:'#1E3A8A', lightBlue:'#3B82F6', accentRed:'#EF4444', softBg:'#F8FAFC' }
+    }}}
+  }
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  input, select, textarea { font-size: 16px !important; }
+</style>
 </head>
 <body class="bg-brand-softBg font-sans text-slate-800 min-h-screen flex flex-col">
 
-  <!-- TOP HEADER -->
-  <header class="bg-brand-blue text-white shadow-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <div class="bg-white text-brand-blue p-2 rounded-lg font-black text-xl shadow">
-          <i class="fa-solid fa-graduation-cap"></i>
-        </div>
-        <div>
-          <h1 class="font-bold text-xl leading-tight">EduPortal</h1>
-          <p class="text-xs text-blue-200">Tuition & Batch Management Platform</p>
-        </div>
-      </div>
-
-      <!-- Auth Header Info -->
-      <div id="authHeader" class="hidden flex items-center gap-3">
-        <span id="userBadge" class="text-xs bg-blue-900/80 border border-blue-400/30 px-3 py-1.5 rounded-xl text-blue-100 font-medium"></span>
-        <button id="logoutBtn" class="bg-brand-accentRed hover:bg-red-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold transition shadow">
-          <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
-        </button>
+<header class="bg-brand-blue text-white shadow-md sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+      <div class="bg-white text-brand-blue p-2 rounded-lg font-black text-xl shadow"><i class="fa-solid fa-graduation-cap"></i></div>
+      <div>
+        <h1 class="font-bold text-xl leading-tight">EduPortal</h1>
+        <p class="text-xs text-blue-200">Tuition & Batch Management Platform</p>
       </div>
     </div>
-  </header>
-
-  <!-- AUTHENTICATION CONTAINER (LOGIN / SIGNUP) -->
-  <div id="authSection" class="max-w-md w-full mx-auto my-auto p-6 my-12">
-    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-      <div class="text-center space-y-2">
-        <h2 id="authTitle" class="text-2xl font-black text-slate-800">Welcome Back</h2>
-        <p id="authSubtitle" class="text-xs text-slate-500">Sign in to access your tuition portal</p>
-      </div>
-
-      <form id="authForm" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email Address</label>
-          <input type="email" id="authEmail" required placeholder="name@example.com" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
-          <input type="password" id="authPassword" required placeholder="••••••••" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
-        </div>
-
-        <div id="roleSelectGroup" class="hidden">
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Account Role</label>
-          <select id="authRole" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none">
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-          </select>
-        </div>
-
-        <button type="submit" id="authSubmitBtn" class="w-full bg-brand-blue hover:bg-blue-900 text-white font-bold py-2.5 rounded-xl text-sm shadow transition">
-          Sign In
-        </button>
-      </form>
-
-      <div class="text-center border-t pt-4">
-        <button type="button" id="toggleAuthModeBtn" class="text-xs font-bold text-brand-lightBlue hover:underline p-2">
-          Don't have an account? Sign Up
-        </button>
-      </div>
+    <div id="authHeader" class="hidden items-center gap-3">
+      <span id="userBadge" class="text-xs bg-blue-900/80 border border-blue-400/30 px-3 py-1.5 rounded-xl text-blue-100 font-medium"></span>
+      <button id="logoutBtn" class="bg-brand-accentRed hover:bg-red-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold transition shadow">
+        <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+      </button>
     </div>
   </div>
+</header>
 
-  <!-- MAIN APP CONTAINER -->
-  <main id="appSection" class="hidden max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
-
-    <!-- NAVIGATION TABS -->
-    <div class="flex border-b border-slate-200 mb-6 bg-white rounded-xl p-1 shadow-sm border">
-      <button id="tabOverviewBtn" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50">
-        <i class="fa-solid fa-house mr-2"></i>Dashboard & Feed
-      </button>
-      <button id="tabTestsBtn" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue">
-        <i class="fa-solid fa-file-signature mr-2"></i>Tests & Marks
-      </button>
+<!-- AUTH -->
+<div id="authSection" class="max-w-md w-full mx-auto my-12 p-6">
+  <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+    <div class="text-center space-y-2">
+      <h2 id="authTitle" class="text-2xl font-black text-slate-800">Welcome Back</h2>
+      <p id="authSubtitle" class="text-xs text-slate-500">Sign in to access your tuition portal</p>
     </div>
+    <form id="authForm" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Full Name</label>
+        <input type="text" id="authName" placeholder="Your name" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Email Address</label>
+        <input type="email" id="authEmail" required placeholder="name@example.com" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
+        <input type="password" id="authPassword" required placeholder="At least 6 characters" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
+      </div>
+      <div id="roleSelectGroup" class="hidden">
+        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Account Role</label>
+        <select id="authRole" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none">
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+        </select>
+      </div>
+      <button type="submit" id="authSubmitBtn" class="w-full bg-brand-blue hover:bg-blue-900 text-white font-bold py-2.5 rounded-xl text-sm shadow transition">Sign In</button>
+    </form>
+    <div id="authNameGroupWrap" class="hidden"></div>
+    <div class="text-center border-t pt-4">
+      <button type="button" id="toggleAuthModeBtn" class="text-xs font-bold text-brand-lightBlue hover:underline p-2">Don't have an account? Sign Up</button>
+    </div>
+    <p id="authError" class="hidden text-xs text-brand-accentRed bg-red-50 border border-red-200 rounded-xl p-3"></p>
+  </div>
+</div>
 
-    <!-- TEACHER DASHBOARD -->
-    <div id="teacherDashboard" class="hidden space-y-6">
-      <div id="teacherOverviewTab" class="space-y-6">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <h2 class="text-2xl font-bold text-slate-800">Teacher Control Panel</h2>
-            <p class="text-sm text-slate-500">Manage batch slots, daily attendance, and post class updates.</p>
-          </div>
-          <div class="flex gap-3">
-            <button id="openCreateSlotBtn" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition">
-              <i class="fa-solid fa-plus mr-2"></i> New Batch Slot
-            </button>
-            <button id="openPostModalBtn" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition">
-              <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Upload Post / Material
-            </button>
-          </div>
+<!-- APP -->
+<main id="appSection" class="hidden max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+  <div class="flex border-b border-slate-200 mb-6 bg-white rounded-xl p-1 shadow-sm border">
+    <button id="tabOverviewBtn" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50"><i class="fa-solid fa-house mr-2"></i>Dashboard & Feed</button>
+    <button id="tabTestsBtn" class="flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue"><i class="fa-solid fa-file-signature mr-2"></i>Tests & Marks</button>
+  </div>
+
+  <!-- TEACHER -->
+  <div id="teacherDashboard" class="hidden space-y-6">
+    <div id="teacherOverviewTab" class="space-y-6">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">Teacher Control Panel</h2>
+          <p class="text-sm text-slate-500">Manage batch slots, daily attendance, and post class updates.</p>
         </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-            <div class="flex justify-between items-center border-b pb-4">
-              <div>
-                <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-clipboard-user text-brand-lightBlue mr-2"></i>Mark Attendance</h3>
-                <p class="text-xs text-slate-500">Select a slot to load student rosters and toggle status.</p>
-              </div>
-              <select id="teacherSlotSelect" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-brand-lightBlue focus:border-brand-lightBlue p-2.5 font-medium"></select>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left text-slate-600">
-                <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b">
-                  <tr>
-                    <th class="px-4 py-3">Student Name</th>
-                    <th class="px-4 py-3">Roll No</th>
-                    <th class="px-4 py-3 text-center">Status Toggle</th>
-                  </tr>
-                </thead>
-                <tbody id="attendanceRosterBody" class="divide-y"></tbody>
-              </table>
-            </div>
-            <div class="flex justify-between items-center pt-2">
-              <span class="text-xs text-slate-400" id="attendanceSummaryText">0 Students Listed</span>
-              <button id="saveAttendanceBtn" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Attendance</button>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-            <h3 class="font-bold text-lg text-slate-800 border-b pb-3"><i class="fa-solid fa-layer-group text-brand-lightBlue mr-2"></i>Active Batch Slots</h3>
-            <div id="teacherSlotsList" class="space-y-3 max-h-[380px] overflow-y-auto pr-1"></div>
-          </div>
+        <div class="flex gap-3">
+          <button id="openCreateSlotBtn" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-plus mr-2"></i> New Batch Slot</button>
+          <button id="openPostModalBtn" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-cloud-arrow-up mr-2"></i> Upload Post</button>
         </div>
       </div>
-
-      <div id="teacherTestsTab" class="hidden space-y-6">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <h2 class="text-2xl font-bold text-slate-800">Test & Marks Portal</h2>
-            <p class="text-sm text-slate-500">Create new tests and input student scores per batch slot.</p>
-          </div>
-          <button id="openCreateTestBtn" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-plus mr-2"></i> Create New Test</button>
-        </div>
-
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div class="flex justify-between items-center border-b pb-4">
             <div>
-              <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-pen-to-square text-brand-lightBlue mr-2"></i>Input / Edit Test Marks</h3>
-              <p class="text-xs text-slate-500">Select a test to enter student marks.</p>
+              <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-clipboard-user text-brand-lightBlue mr-2"></i>Mark Attendance</h3>
+              <p class="text-xs text-slate-500">Select a slot to load enrolled students and toggle status.</p>
             </div>
-            <select id="teacherTestSelect" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl focus:ring-brand-lightBlue focus:border-brand-lightBlue p-2.5 font-medium"></select>
+            <select id="teacherSlotSelect" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl p-2.5 font-medium"></select>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-slate-600">
-              <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b">
-                <tr>
-                  <th class="px-4 py-3">Student Name</th>
-                  <th class="px-4 py-3">Roll No</th>
-                  <th class="px-4 py-3 text-center">Marks Obtained</th>
-                  <th class="px-4 py-3 text-center">Max Marks</th>
-                </tr>
-              </thead>
-              <tbody id="testMarksEditorBody" class="divide-y"></tbody>
+              <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b"><tr><th class="px-4 py-3">Student</th><th class="px-4 py-3 text-center">Status Toggle</th></tr></thead>
+              <tbody id="attendanceRosterBody" class="divide-y"></tbody>
             </table>
           </div>
           <div class="flex justify-between items-center pt-2">
-            <span class="text-xs text-slate-400" id="testMarksSummaryText">0 Records Loaded</span>
-            <button id="saveTestMarksBtn" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Marks</button>
+            <span class="text-xs text-slate-400" id="attendanceSummaryText">0 Students Listed</span>
+            <button id="saveAttendanceBtn" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Attendance</button>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <h3 class="font-bold text-lg text-slate-800 border-b pb-3"><i class="fa-solid fa-layer-group text-brand-lightBlue mr-2"></i>Active Batch Slots</h3>
+          <div id="teacherSlotsList" class="space-y-3 max-h-[380px] overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="teacherTestsTab" class="hidden space-y-6">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
+        <div><h2 class="text-2xl font-bold text-slate-800">Test & Marks Portal</h2><p class="text-sm text-slate-500">Create tests and input scores per batch slot.</p></div>
+        <button id="openCreateTestBtn" class="bg-brand-lightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-plus mr-2"></i> Create New Test</button>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div class="flex justify-between items-center border-b pb-4">
+          <div><h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-pen-to-square text-brand-lightBlue mr-2"></i>Input / Edit Marks</h3><p class="text-xs text-slate-500">Select a test to enter marks.</p></div>
+          <select id="teacherTestSelect" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl p-2.5 font-medium"></select>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left text-slate-600">
+            <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b"><tr><th class="px-4 py-3">Student</th><th class="px-4 py-3 text-center">Marks Obtained</th><th class="px-4 py-3 text-center">Max Marks</th></tr></thead>
+            <tbody id="testMarksEditorBody" class="divide-y"></tbody>
+          </table>
+        </div>
+        <div class="flex justify-between items-center pt-2">
+          <span class="text-xs text-slate-400" id="testMarksSummaryText">0 Records Loaded</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDENT -->
+  <div id="studentDashboard" class="hidden space-y-6">
+    <div id="studentOverviewTab" class="space-y-6">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
+        <div><h2 class="text-2xl font-bold text-slate-800">Student Portal</h2><p class="text-sm text-slate-500">View your batches, feed, and study materials.</p></div>
+        <button id="openJoinBatchBtn" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-key mr-2"></i> Join Batch with Code</button>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-4">
+          <h3 class="font-bold text-lg text-slate-800 flex items-center"><i class="fa-solid fa-bullhorn text-brand-lightBlue mr-2"></i> Class Feed & Materials</h3>
+          <div id="studentFeedList" class="space-y-4"></div>
+        </div>
+        <div class="space-y-4">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <h3 class="font-bold text-lg text-slate-800 border-b pb-3"><i class="fa-solid fa-book-bookmark text-brand-lightBlue mr-2"></i> My Joined Batches</h3>
+            <div id="studentBatchesList" class="space-y-3"></div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- STUDENT DASHBOARD -->
-    <div id="studentDashboard" class="hidden space-y-6">
-      <div id="studentOverviewTab" class="space-y-6">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <h2 class="text-2xl font-bold text-slate-800">Student Portal</h2>
-            <p class="text-sm text-slate-500">View enrolled slots, mark attendance records, and access study materials.</p>
-          </div>
-          <button id="openJoinBatchBtn" class="bg-brand-blue hover:bg-blue-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center shadow transition"><i class="fa-solid fa-key mr-2"></i> Join Batch with Code</button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="lg:col-span-2 space-y-4">
-            <h3 class="font-bold text-lg text-slate-800 flex items-center"><i class="fa-solid fa-bullhorn text-brand-lightBlue mr-2"></i> Class Feed & Materials</h3>
-            <div id="studentFeedList" class="space-y-4"></div>
-          </div>
-          <div class="space-y-4">
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-              <h3 class="font-bold text-lg text-slate-800 border-b pb-3"><i class="fa-solid fa-book-bookmark text-brand-lightBlue mr-2"></i> My Joined Batches</h3>
-              <div id="studentBatchesList" class="space-y-3"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="studentTestsTab" class="hidden space-y-6">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <h2 class="text-2xl font-bold text-slate-800">My Test Performance</h2>
-          <p class="text-sm text-slate-500">Track scores and evaluated test marks for your enrolled batch slots.</p>
-        </div>
-        <div id="studentTestResultsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-      </div>
-    </div>
-
-  </main>
-
-  <!-- MODALS -->
-
-  <!-- Modal: Create Slot -->
-  <div id="createSlotModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="font-bold text-lg text-slate-800">Create New Tuition Slot</h3>
-        <button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      <form id="createSlotForm" class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Slot Name / Class Title</label>
-          <input type="text" id="slotTitleInput" required placeholder="e.g., Class 12 - Applied Math" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Batch Timing</label>
-          <input type="text" id="slotTimingInput" required placeholder="e.g., Mon/Wed/Fri - 4:00 PM" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
-          <button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Create Slot</button>
-        </div>
-      </form>
+    <div id="studentTestsTab" class="hidden space-y-6">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h2 class="text-2xl font-bold text-slate-800">My Test Performance</h2><p class="text-sm text-slate-500">Your scores for enrolled batch slots.</p></div>
+      <div id="studentTestResultsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
   </div>
+</main>
 
-  <!-- Modal: Create Test -->
-  <div id="createTestModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="font-bold text-lg text-slate-800">Create New Tuition Test</h3>
-        <button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      <form id="createTestForm" class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Batch Slot</label>
-          <select id="testTargetSlot" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Test Name / Title</label>
-          <input type="text" id="testTitleInput" required placeholder="e.g., Weekly Test 1 - Calculus" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Maximum Marks</label>
-          <input type="number" id="testMaxMarksInput" required value="50" min="1" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
-          <button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Create Test</button>
-        </div>
-      </form>
-    </div>
+<!-- MODALS -->
+<div id="createSlotModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4">
+    <div class="flex justify-between items-center border-b pb-3"><h3 class="font-bold text-lg text-slate-800">Create New Tuition Slot</h3><button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+    <form id="createSlotForm" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Slot Name / Class Title</label><input type="text" id="slotTitleInput" required placeholder="e.g., Class 12 - Applied Math" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none"/></div>
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Batch Timing</label><input type="text" id="slotTimingInput" required placeholder="e.g., Mon/Wed/Fri - 4:00 PM" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none"/></div>
+      <div class="pt-2 flex justify-end gap-2"><button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button><button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Create Slot</button></div>
+    </form>
   </div>
+</div>
 
-  <!-- Modal: Post Content with File Upload -->
-  <div id="postContentModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="font-bold text-lg text-slate-800">Upload Notes / Homework / Announcement</h3>
-        <button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      <form id="postContentForm" class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Batch Slot</label>
-          <select id="postTargetSlot" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Post Type</label>
-          <select id="postType" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none">
-            <option value="Notes">📄 Study Notes</option>
-            <option value="Homework">📝 Homework Assignment</option>
-            <option value="Announcement">📢 Announcement</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Title</label>
-          <input type="text" id="postTitle" required placeholder="e.g., Chapter 4 Worksheet" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Details / Instructions</label>
-          <textarea id="postContent" rows="3" required placeholder="Write instructions..." class="w-full border border-slate-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-brand-lightBlue outline-none"></textarea>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Attach File (PDF or Image)</label>
-          <input type="file" id="postFileInput" accept="image/*,.pdf" class="w-full border border-slate-300 p-2 rounded-xl text-xs text-slate-600 focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
-          <button type="submit" id="postSubmitBtn" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Publish Post</button>
-        </div>
-      </form>
-    </div>
+<div id="createTestModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4">
+    <div class="flex justify-between items-center border-b pb-3"><h3 class="font-bold text-lg text-slate-800">Create New Test</h3><button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+    <form id="createTestForm" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Batch Slot</label><select id="testTargetSlot" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none"></select></div>
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Test Name / Title</label><input type="text" id="testTitleInput" required placeholder="e.g., Weekly Test 1" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none"/></div>
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Maximum Marks</label><input type="number" id="testMaxMarksInput" required value="50" min="1" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none"/></div>
+      <div class="pt-2 flex justify-end gap-2"><button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button><button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Create Test</button></div>
+    </form>
   </div>
+</div>
 
-  <!-- Modal: Join Batch -->
-  <div id="joinBatchModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="font-bold text-lg text-slate-800">Join Batch Slot</h3>
-        <button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+<div id="postContentModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border space-y-4">
+    <div class="flex justify-between items-center border-b pb-3"><h3 class="font-bold text-lg text-slate-800">Upload Notes / Homework / Announcement</h3><button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+    <form id="postContentForm" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Batch Slot</label><select id="postTargetSlot" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none"></select></div>
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Post Type</label>
+        <select id="postType" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none">
+          <option value="Notes">📄 Study Notes</option><option value="Homework">📝 Homework Assignment</option><option value="Announcement">📢 Announcement</option>
+        </select>
       </div>
-      <form id="joinBatchForm" class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Enter 6-Digit Join Code</label>
-          <input type="text" id="batchCodeInput" maxlength="6" required placeholder="e.g., MATH12" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm font-mono tracking-widest text-center uppercase text-lg focus:ring-2 focus:ring-brand-lightBlue outline-none"/>
-        </div>
-        <div class="pt-2 flex justify-end gap-2">
-          <button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
-          <button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Join Batch</button>
-        </div>
-      </form>
-    </div>
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Title</label><input type="text" id="postTitle" required placeholder="e.g., Chapter 4 Worksheet" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none"/></div>
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Details / Instructions</label><textarea id="postContent" rows="3" required placeholder="Write instructions..." class="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none"></textarea></div>
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Attach File (PDF or Image)</label><input type="file" id="postFileInput" accept="image/*,.pdf" class="w-full border border-slate-300 p-2 rounded-xl text-xs text-slate-600 outline-none"/></div>
+      <div class="pt-2 flex justify-end gap-2"><button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button><button type="submit" id="postSubmitBtn" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Publish Post</button></div>
+    </form>
   </div>
+</div>
 
-  <!-- JAVASCRIPT & SUPABASE LOGIC -->
-  <script>
-    const SUPABASE_URL = 'https://adxzqbaosvadpchrdshe.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeHpxYmFvc3ZhZHBjaHJkc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MzE0MjcsImV4cCI6MjEwMTMwNzQyN30.9wkzGmtlVf9Fv1Zpant2Q-FDYnOLi6QBs6ERqrSSOFo';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<div id="joinBatchModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border space-y-4">
+    <div class="flex justify-between items-center border-b pb-3"><h3 class="font-bold text-lg text-slate-800">Join Batch Slot</h3><button class="closeModalBtn text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+    <form id="joinBatchForm" class="space-y-3">
+      <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Enter 6-Character Join Code</label><input type="text" id="batchCodeInput" maxlength="6" required placeholder="e.g., MATH12" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm font-mono tracking-widest text-center uppercase text-lg outline-none"/></div>
+      <div class="pt-2 flex justify-end gap-2"><button type="button" class="closeModalBtn px-4 py-2 rounded-xl text-sm text-slate-600 font-medium hover:bg-slate-100">Cancel</button><button type="submit" class="bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold">Join Batch</button></div>
+    </form>
+  </div>
+</div>
 
-    let isSignUpMode = false;
-    let currentUser = null;
-    let currentUserRole = null;
+<script>
+const SUPABASE_URL = 'https://adxzqbaosvadpchrdshe.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeHpxYmFvc3ZhZHBjaHJkc2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MzE0MjcsImV4cCI6MjEwMTMwNzQyN30.9wkzGmtlVf9Fv1Zpant2Q-FDYnOLi6QBs6ERqrSSOFo';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const appState = {
-      slots: [],
-      students: [
-        { id: 'std-1', name: 'Aarav Sharma', roll: '101' },
-        { id: 'std-2', name: 'Riya Gupta', roll: '102' }
-      ],
-      attendance: {},
-      tests: [],
-      posts: []
-    };
+let isSignUpMode = false;
+let currentUser = null;
+let currentUserRole = null;
 
-    // CROSS-PLATFORM DOM LOAD INITIALIZER
-    document.addEventListener('DOMContentLoaded', () => {
-      
-      // Bind Auth Toggle Event
-      const toggleBtn = document.getElementById('toggleAuthModeBtn');
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          isSignUpMode = !isSignUpMode;
-          document.getElementById('authTitle').innerText = isSignUpMode ? "Create Account" : "Welcome Back";
-          document.getElementById('authSubtitle').innerText = isSignUpMode ? "Sign up to access your tuition portal" : "Sign in to access your tuition portal";
-          document.getElementById('authSubmitBtn').innerText = isSignUpMode ? "Sign Up" : "Sign In";
-          document.getElementById('toggleAuthModeBtn').innerText = isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up";
-          
-          const roleGroup = document.getElementById('roleSelectGroup');
-          if (isSignUpMode) roleGroup.classList.remove('hidden');
-          else roleGroup.classList.add('hidden');
-        });
+const appState = { slots: [], enrolledStudents: [], posts: [], tests: [], myEnrollments: [] };
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('toggleAuthModeBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    isSignUpMode = !isSignUpMode;
+    document.getElementById('authTitle').innerText = isSignUpMode ? "Create Account" : "Welcome Back";
+    document.getElementById('authSubtitle').innerText = isSignUpMode ? "Sign up to access your tuition portal" : "Sign in to access your tuition portal";
+    document.getElementById('authSubmitBtn').innerText = isSignUpMode ? "Sign Up" : "Sign In";
+    document.getElementById('toggleAuthModeBtn').innerText = isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up";
+    document.getElementById('roleSelectGroup').classList.toggle('hidden', !isSignUpMode);
+  });
+
+  document.getElementById('authForm').addEventListener('submit', handleAuthSubmit);
+  document.getElementById('openCreateSlotBtn')?.addEventListener('click', () => openModal('createSlotModal'));
+  document.getElementById('openPostModalBtn')?.addEventListener('click', () => openModal('postContentModal'));
+  document.getElementById('openCreateTestBtn')?.addEventListener('click', () => openModal('createTestModal'));
+  document.getElementById('openJoinBatchBtn')?.addEventListener('click', () => openModal('joinBatchModal'));
+  document.querySelectorAll('.closeModalBtn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
+  }));
+
+  document.getElementById('tabOverviewBtn').addEventListener('click', () => switchTab('overview'));
+  document.getElementById('tabTestsBtn').addEventListener('click', () => switchTab('tests'));
+  document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+  document.getElementById('createSlotForm').addEventListener('submit', handleCreateSlot);
+  document.getElementById('createTestForm').addEventListener('submit', handleCreateTest);
+  document.getElementById('postContentForm').addEventListener('submit', handlePostContent);
+  document.getElementById('joinBatchForm').addEventListener('submit', handleJoinBatch);
+
+  document.getElementById('teacherSlotSelect').addEventListener('change', loadAttendanceRoster);
+  document.getElementById('teacherTestSelect').addEventListener('change', loadTestMarksEditor);
+  document.getElementById('saveAttendanceBtn').addEventListener('click', saveAttendance);
+
+  checkSession();
+});
+
+function openModal(id){ document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+function showAuthError(msg){
+  const el = document.getElementById('authError');
+  el.innerText = msg; el.classList.remove('hidden');
+}
+function clearAuthError(){ document.getElementById('authError').classList.add('hidden'); }
+
+async function handleAuthSubmit(e){
+  e.preventDefault();
+  clearAuthError();
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  const fullName = document.getElementById('authName').value.trim();
+  const role = document.getElementById('authRole').value;
+  const btn = document.getElementById('authSubmitBtn');
+
+  try {
+    btn.disabled = true; btn.innerText = "Please wait...";
+
+    if (isSignUpMode) {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) { showAuthError("Signup failed: " + error.message); return; }
+      if (!data.user) { showAuthError("Signup did not return a user. Try again."); return; }
+
+      const { error: profileErr } = await supabase.from('profiles')
+        .insert([{ id: data.user.id, email, role, full_name: fullName || email.split('@')[0] }]);
+      if (profileErr) { showAuthError("Profile creation failed: " + profileErr.message); return; }
+
+      if (!data.session) {
+        showAuthError("Account created! Check your email to confirm, then sign in.");
+        return;
       }
+      await checkSession();
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) { showAuthError("Login failed: " + error.message); return; }
+      await checkSession();
+    }
+  } catch (err) {
+    showAuthError("Unexpected error: " + err.message);
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = isSignUpMode ? "Sign Up" : "Sign In";
+  }
+}
 
-      // Bind Auth Submit Event
-      document.getElementById('authForm').addEventListener('submit', handleAuthSubmit);
+async function checkSession(){
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    let { data: profile, error } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
 
-      // Bind Modal Handlers
-      document.getElementById('openCreateSlotBtn')?.addEventListener('click', () => openModal('createSlotModal'));
-      document.getElementById('openPostModalBtn')?.addEventListener('click', () => openModal('postContentModal'));
-      document.getElementById('openCreateTestBtn')?.addEventListener('click', () => openModal('createTestModal'));
-      document.getElementById('openJoinBatchBtn')?.addEventListener('click', () => openModal('joinBatchModal'));
-      
-      document.querySelectorAll('.closeModalBtn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
-        });
-      });
+    if (!profile) {
+      // Profile row missing (e.g. created before this schema) — create a fallback
+      await supabase.from('profiles').insert([{ id: currentUser.id, email: currentUser.email, role: 'student', full_name: currentUser.email.split('@')[0] }]);
+      const retry = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+      profile = retry.data;
+    }
 
-      // Bind Tabs
-      document.getElementById('tabOverviewBtn')?.addEventListener('click', () => switchTab('overview'));
-      document.getElementById('tabTestsBtn')?.addEventListener('click', () => switchTab('tests'));
+    currentUserRole = profile ? profile.role : 'student';
 
-      // Bind Logout
-      document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+    document.getElementById('authSection').classList.add('hidden');
+    document.getElementById('appSection').classList.remove('hidden');
+    document.getElementById('authHeader').classList.remove('hidden');
+    document.getElementById('authHeader').classList.add('flex');
+    document.getElementById('userBadge').innerText = `${profile?.full_name || currentUser.email} (${currentUserRole.toUpperCase()})`;
 
-      // Bind Form Submissions
-      document.getElementById('createSlotForm')?.addEventListener('submit', handleCreateSlot);
-      document.getElementById('createTestForm')?.addEventListener('submit', handleCreateTest);
-      document.getElementById('postContentForm')?.addEventListener('submit', handlePostContent);
-      document.getElementById('joinBatchForm')?.addEventListener('submit', handleJoinBatch);
+    document.getElementById('teacherDashboard').classList.toggle('hidden', currentUserRole !== 'teacher');
+    document.getElementById('studentDashboard').classList.toggle('hidden', currentUserRole === 'teacher');
 
-      document.getElementById('teacherSlotSelect')?.addEventListener('change', loadAttendanceRoster);
-      document.getElementById('teacherTestSelect')?.addEventListener('change', loadTestMarksEditor);
+    await loadAllSupabaseData();
+  } else {
+    document.getElementById('authSection').classList.remove('hidden');
+    document.getElementById('appSection').classList.add('hidden');
+    document.getElementById('authHeader').classList.add('hidden');
+  }
+}
 
-      document.getElementById('saveAttendanceBtn')?.addEventListener('click', saveAttendance);
-      document.getElementById('saveTestMarksBtn')?.addEventListener('click', saveTestMarks);
+async function handleLogout(){
+  await supabase.auth.signOut();
+  window.location.reload();
+}
 
-      // Check session state
-      checkSession();
+async function loadAllSupabaseData(){
+  if (currentUserRole === 'teacher') {
+    const { data: slots } = await supabase.from('slots').select('*').eq('teacher_id', currentUser.id);
+    appState.slots = slots || [];
+  } else {
+    const { data: myEnrollments } = await supabase.from('enrollments').select('*, slots(*)').eq('student_id', currentUser.id);
+    appState.myEnrollments = myEnrollments || [];
+    appState.slots = (myEnrollments || []).map(en => en.slots).filter(Boolean);
+  }
+
+  const slotIds = appState.slots.map(s => s.id);
+
+  if (slotIds.length > 0) {
+    const { data: posts } = await supabase.from('posts').select('*').in('slot_id', slotIds).order('created_at', { ascending: false });
+    appState.posts = posts || [];
+
+    const { data: tests } = await supabase.from('tests').select('*').in('slot_id', slotIds);
+    appState.tests = tests || [];
+    for (let test of appState.tests) {
+      const { data: marks } = await supabase.from('test_marks').select('*').eq('test_id', test.id);
+      test.marksById = {};
+      (marks || []).forEach(m => test.marksById[m.student_id] = m.marks_obtained);
+    }
+  } else {
+    appState.posts = [];
+    appState.tests = [];
+  }
+
+  if (currentUserRole === 'teacher') {
+    // Load all students enrolled across teacher's slots (per-slot lookup happens in loadAttendanceRoster)
+    renderTeacherView();
+  } else {
+    renderStudentView();
+  }
+}
+
+function switchTab(tab){
+  const ov = document.getElementById('tabOverviewBtn'), te = document.getElementById('tabTestsBtn');
+  const active = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50";
+  const inactive = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue";
+  ov.className = tab === 'overview' ? active : inactive;
+  te.className = tab === 'tests' ? active : inactive;
+  document.getElementById('teacherOverviewTab').classList.toggle('hidden', tab !== 'overview');
+  document.getElementById('teacherTestsTab').classList.toggle('hidden', tab !== 'tests');
+  document.getElementById('studentOverviewTab').classList.toggle('hidden', tab !== 'overview');
+  document.getElementById('studentTestsTab').classList.toggle('hidden', tab !== 'tests');
+}
+
+function generateCode(){ return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+
+async function handleCreateSlot(e){
+  e.preventDefault();
+  const title = document.getElementById('slotTitleInput').value.trim();
+  const timing = document.getElementById('slotTimingInput').value.trim();
+  const { error } = await supabase.from('slots').insert([{ title, timing, code: generateCode(), teacher_id: currentUser.id }]);
+  if (error) return alert("Error creating slot: " + error.message);
+  closeModal('createSlotModal'); e.target.reset();
+  await loadAllSupabaseData();
+}
+
+async function handleCreateTest(e){
+  e.preventDefault();
+  const slotId = document.getElementById('testTargetSlot').value;
+  const title = document.getElementById('testTitleInput').value.trim();
+  const maxMarks = parseInt(document.getElementById('testMaxMarksInput').value, 10);
+  if (!slotId) return alert("Create a batch slot first.");
+  const { error } = await supabase.from('tests').insert([{ slot_id: slotId, title, max_marks: maxMarks }]);
+  if (error) return alert("Error creating test: " + error.message);
+  closeModal('createTestModal'); e.target.reset();
+  await loadAllSupabaseData();
+}
+
+async function handlePostContent(e){
+  e.preventDefault();
+  const btn = document.getElementById('postSubmitBtn');
+  btn.innerText = "Uploading..."; btn.disabled = true;
+
+  const slotId = document.getElementById('postTargetSlot').value;
+  const type = document.getElementById('postType').value;
+  const title = document.getElementById('postTitle').value.trim();
+  const content = document.getElementById('postContent').value.trim();
+  const fileInput = document.getElementById('postFileInput');
+
+  let fileUrl = null, fileName = null;
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    fileName = file.name;
+    const filePath = `${Date.now()}_${file.name}`;
+    const { error: uploadErr } = await supabase.storage.from('class-files').upload(filePath, file);
+    if (!uploadErr) {
+      const { data: publicUrlData } = supabase.storage.from('class-files').getPublicUrl(filePath);
+      fileUrl = publicUrlData.publicUrl;
+    } else {
+      alert("File upload warning: " + uploadErr.message);
+    }
+  }
+
+  const { error } = await supabase.from('posts').insert([{ slot_id: slotId, type, title, content, file_url: fileUrl, file_name: fileName }]);
+  btn.innerText = "Publish Post"; btn.disabled = false;
+  if (error) return alert("Error publishing post: " + error.message);
+  closeModal('postContentModal'); e.target.reset();
+  await loadAllSupabaseData();
+}
+
+async function handleJoinBatch(e){
+  e.preventDefault();
+  const code = document.getElementById('batchCodeInput').value.trim().toUpperCase();
+  const { data: slot, error } = await supabase.from('slots').select('*').eq('code', code).single();
+  if (error || !slot) return alert("Invalid batch code.");
+
+  const { error: enrollErr } = await supabase.from('enrollments').insert([{ student_id: currentUser.id, slot_id: slot.id }]);
+  if (enrollErr) {
+    if (enrollErr.code === '23505') alert("You're already enrolled in this batch.");
+    else alert("Error joining batch: " + enrollErr.message);
+    return;
+  }
+  alert(`Joined ${slot.title}!`);
+  closeModal('joinBatchModal'); e.target.reset();
+  await loadAllSupabaseData();
+}
+
+function renderTeacherView(){
+  const slotSelect = document.getElementById('teacherSlotSelect');
+  const postSelect = document.getElementById('postTargetSlot');
+  const testSelect = document.getElementById('testTargetSlot');
+  [slotSelect, postSelect, testSelect].forEach(sel => sel.innerHTML = '');
+
+  if (appState.slots.length === 0) {
+    [slotSelect, postSelect, testSelect].forEach(sel => sel.innerHTML = '<option value="">No slots yet</option>');
+  }
+
+  appState.slots.forEach(slot => {
+    const opt = `<option value="${slot.id}">${slot.title} (${slot.timing})</option>`;
+    slotSelect.innerHTML += opt;
+    postSelect.innerHTML += `<option value="${slot.id}">${slot.title}</option>`;
+    testSelect.innerHTML += `<option value="${slot.id}">${slot.title}</option>`;
+  });
+
+  const slotsContainer = document.getElementById('teacherSlotsList');
+  slotsContainer.innerHTML = appState.slots.length ? '' : '<p class="text-sm text-slate-400 text-center py-4">No batch slots created yet.</p>';
+  appState.slots.forEach(slot => {
+    slotsContainer.innerHTML += `
+      <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+        <div class="flex justify-between items-start">
+          <h4 class="font-bold text-sm text-slate-800">${slot.title}</h4>
+          <span class="bg-blue-100 text-brand-blue text-[10px] font-mono px-2 py-0.5 rounded font-bold">CODE: ${slot.code}</span>
+        </div>
+        <p class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${slot.timing}</p>
+      </div>`;
+  });
+
+  loadAttendanceRoster();
+
+  const teacherTestSelect = document.getElementById('teacherTestSelect');
+  teacherTestSelect.innerHTML = appState.tests.length ? '' : '<option value="">No tests created yet</option>';
+  appState.tests.forEach(t => {
+    const slot = appState.slots.find(s => s.id === t.slot_id);
+    teacherTestSelect.innerHTML += `<option value="${t.id}">${t.title} (${slot ? slot.title : 'Batch'})</option>`;
+  });
+  loadTestMarksEditor();
+}
+
+async function loadAttendanceRoster(){
+  const selectedSlotId = document.getElementById('teacherSlotSelect').value;
+  const tbody = document.getElementById('attendanceRosterBody');
+  tbody.innerHTML = '';
+  if (!selectedSlotId) {
+    tbody.innerHTML = '<tr><td colspan="2" class="text-center py-4 text-slate-400">Select a slot.</td></tr>';
+    return;
+  }
+
+  const { data: enrollments } = await supabase.from('enrollments').select('*, profiles(*)').eq('slot_id', selectedSlotId);
+  const students = (enrollments || []).map(e => e.profiles).filter(Boolean);
+  appState.enrolledStudents = students;
+
+  document.getElementById('attendanceSummaryText').innerText = `${students.length} Students Listed`;
+
+  if (students.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" class="text-center py-4 text-slate-400">No students enrolled in this slot yet.</td></tr>';
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  const { data: existingAttendance } = await supabase.from('attendance').select('*').eq('slot_id', selectedSlotId).eq('att_date', today);
+  const attMap = {};
+  (existingAttendance || []).forEach(a => attMap[a.student_id] = a.status);
+
+  students.forEach(student => {
+    const isPresent = attMap[student.id] !== false;
+    tbody.innerHTML += `
+      <tr class="hover:bg-slate-50 transition" data-student-id="${student.id}">
+        <td class="px-4 py-3 font-medium text-slate-800">${student.full_name || student.email}</td>
+        <td class="px-4 py-3 text-center">
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" data-student="${student.id}" ${isPresent ? 'checked' : ''} class="sr-only peer att-toggle">
+            <div class="relative w-11 h-6 bg-brand-accentRed rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+            <span class="ms-2 text-xs font-bold att-label ${isPresent ? 'text-emerald-600' : 'text-brand-accentRed'}">${isPresent ? 'PRESENT' : 'ABSENT'}</span>
+          </label>
+        </td>
+      </tr>`;
+  });
+
+  tbody.querySelectorAll('.att-toggle').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const label = e.target.closest('label').querySelector('.att-label');
+      label.innerText = e.target.checked ? 'PRESENT' : 'ABSENT';
+      label.className = `ms-2 text-xs font-bold att-label ${e.target.checked ? 'text-emerald-600' : 'text-brand-accentRed'}`;
     });
+  });
+}
 
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+async function saveAttendance(){
+  const selectedSlotId = document.getElementById('teacherSlotSelect').value;
+  if (!selectedSlotId) return alert("Select a slot first.");
+  const today = new Date().toISOString().slice(0,10);
 
-    async function handleAuthSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('authEmail').value.trim();
-      const password = document.getElementById('authPassword').value.trim();
-      const role = document.getElementById('authRole').value;
+  const rows = [];
+  document.querySelectorAll('#attendanceRosterBody tr[data-student-id]').forEach(tr => {
+    const studentId = tr.getAttribute('data-student-id');
+    const checked = tr.querySelector('.att-toggle').checked;
+    rows.push({ slot_id: selectedSlotId, student_id: studentId, att_date: today, status: checked });
+  });
 
-      if (isSignUpMode) {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) return alert("Signup Failed: " + error.message);
+  if (rows.length === 0) return alert("No students to save attendance for.");
 
-        if (data.user) {
-          await supabase.from('profiles').insert([{ id: data.user.id, email, role }]);
-          alert("Account created successfully! Logging you in...");
-          checkSession();
-        }
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return alert("Login Failed: " + error.message);
-        checkSession();
-      }
+  const { error } = await supabase.from('attendance').upsert(rows, { onConflict: 'slot_id,student_id,att_date' });
+  if (error) return alert("Error saving attendance: " + error.message);
+  alert("Attendance saved!");
+}
+
+function loadTestMarksEditor(){
+  const testId = document.getElementById('teacherTestSelect').value;
+  const tbody = document.getElementById('testMarksEditorBody');
+  tbody.innerHTML = '';
+  if (!testId) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">Select a test.</td></tr>';
+    return;
+  }
+
+  const test = appState.tests.find(t => t.id === testId);
+  if (!test) return;
+
+  const students = appState.enrolledStudents.length ? appState.enrolledStudents : [];
+  document.getElementById('testMarksSummaryText').innerText = `${students.length} Students`;
+
+  if (students.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">Select the matching slot under Attendance first to load its roster.</td></tr>';
+    return;
+  }
+
+  students.forEach(student => {
+    const score = test.marksById && test.marksById[student.id] !== undefined ? test.marksById[student.id] : '';
+    tbody.innerHTML += `
+      <tr class="hover:bg-slate-50 transition">
+        <td class="px-4 py-3 font-medium text-slate-800">${student.full_name || student.email}</td>
+        <td class="px-4 py-3 text-center">
+          <input type="number" max="${test.max_marks}" min="0" value="${score}" onchange="updateStudentMark('${test.id}', '${student.id}', this.value)" class="w-20 text-center border p-1.5 rounded-lg text-sm font-bold" />
+        </td>
+        <td class="px-4 py-3 text-center font-semibold">${test.max_marks}</td>
+      </tr>`;
+  });
+}
+
+async function updateStudentMark(testId, studentId, val){
+  const numVal = val === '' ? 0 : parseFloat(val);
+  const { error } = await supabase.from('test_marks').upsert(
+    { test_id: testId, student_id: studentId, marks_obtained: numVal },
+    { onConflict: 'test_id,student_id' }
+  );
+  if (error) alert("Error saving mark: " + error.message);
+}
+
+function renderStudentView(){
+  const feedContainer = document.getElementById('studentFeedList');
+  feedContainer.innerHTML = appState.posts.length ? '' : '<p class="text-sm text-slate-400 text-center py-6 bg-white rounded-2xl border">No posts yet. Join a batch to see updates here.</p>';
+
+  appState.posts.forEach(post => {
+    const slot = appState.slots.find(s => s.id === post.slot_id);
+    const badgeColor = post.type === 'Homework' ? 'bg-red-100 text-brand-accentRed' : (post.type === 'Notes' ? 'bg-blue-100 text-brand-lightBlue' : 'bg-amber-100 text-amber-700');
+
+    let attachmentHtml = '';
+    if (post.file_url) {
+      const isImg = post.file_name && post.file_name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+      attachmentHtml = isImg
+        ? `<div class="pt-2"><img src="${post.file_url}" alt="Attachment" class="max-h-60 rounded-xl border border-slate-200 object-cover"/></div>`
+        : `<div class="pt-2"><a href="${post.file_url}" target="_blank" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 transition"><i class="fa-solid fa-file-pdf text-red-500 text-sm"></i> Download ${post.file_name || 'Attachment'}</a></div>`;
     }
 
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        currentUser = session.user;
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
-        
-        currentUserRole = profile ? profile.role : 'student';
-        
-        document.getElementById('authSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        document.getElementById('authHeader').classList.remove('hidden');
-        document.getElementById('authHeader').classList.add('flex');
-        document.getElementById('userBadge').innerText = `${currentUser.email} (${currentUserRole.toUpperCase()})`;
+    feedContainer.innerHTML += `
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${badgeColor}">${post.type}</span>
+        <h4 class="font-bold text-base text-slate-800 pt-1">${post.title}</h4>
+        <p class="text-xs text-slate-400"><i class="fa-solid fa-bookmark mr-1"></i>${slot ? slot.title : 'Batch'}</p>
+        <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">${post.content || ''}</p>
+        ${attachmentHtml}
+        <div class="flex items-center gap-3 pt-1 border-t border-slate-100">
+          <button onclick="reactPost('${post.id}', 'up')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-up"></i><span>${post.thumbs_up || 0}</span></button>
+          <button onclick="reactPost('${post.id}', 'down')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-down"></i><span>${post.thumbs_down || 0}</span></button>
+        </div>
+      </div>`;
+  });
 
-        if (currentUserRole === 'teacher') {
-          document.getElementById('teacherDashboard').classList.remove('hidden');
-          document.getElementById('studentDashboard').classList.add('hidden');
-        } else {
-          document.getElementById('studentDashboard').classList.remove('hidden');
-          document.getElementById('teacherDashboard').classList.add('hidden');
-        }
+  const studentBatchesList = document.getElementById('studentBatchesList');
+  studentBatchesList.innerHTML = appState.slots.length ? '' : '<p class="text-xs text-slate-400 text-center py-2">No batches joined yet.</p>';
+  appState.slots.forEach(slot => {
+    studentBatchesList.innerHTML += `
+      <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+        <h4 class="font-bold text-sm text-slate-800">${slot.title}</h4>
+        <p class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${slot.timing}</p>
+      </div>`;
+  });
 
-        await loadAllSupabaseData();
-      } else {
-        document.getElementById('authSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
-        document.getElementById('authHeader').classList.add('hidden');
-      }
-    }
+  const studentTestResultsList = document.getElementById('studentTestResultsList');
+  studentTestResultsList.innerHTML = appState.tests.length ? '' : '<p class="text-sm text-slate-400 text-center col-span-2 py-6">No tests assigned yet.</p>';
+  appState.tests.forEach(test => {
+    const slot = appState.slots.find(s => s.id === test.slot_id);
+    const score = test.marksById ? test.marksById[currentUser.id] : undefined;
+    const hasScore = score !== undefined;
+    const percentage = hasScore ? Math.round((score / test.max_marks) * 100) : 0;
+    const scoreBadge = hasScore ? (percentage >= 75 ? "bg-emerald-100 text-emerald-700" : (percentage >= 40 ? "bg-blue-100 text-brand-blue" : "bg-red-100 text-brand-accentRed")) : "bg-slate-100 text-slate-600";
 
-    async function handleLogout() {
-      await supabase.auth.signOut();
-      window.location.reload();
-    }
-
-    async function loadAllSupabaseData() {
-      const { data: slots } = await supabase.from('slots').select('*');
-      if (slots) appState.slots = slots;
-
-      const { data: posts } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
-      if (posts) appState.posts = posts;
-
-      const { data: tests } = await supabase.from('tests').select('*');
-      if (tests) {
-        appState.tests = tests;
-        for (let test of appState.tests) {
-          test.marks = {};
-          const { data: marks } = await supabase.from('test_marks').select('*').eq('test_id', test.id);
-          if (marks) marks.forEach(m => test.marks[m.student_name] = m.marks_obtained);
-        }
-      }
-
-      if (currentUserRole === 'teacher') renderTeacherView();
-      else renderStudentView();
-    }
-
-    function switchTab(tab) {
-      const tabOverviewBtn = document.getElementById('tabOverviewBtn');
-      const tabTestsBtn = document.getElementById('tabTestsBtn');
-
-      if (tab === 'overview') {
-        tabOverviewBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50";
-        tabTestsBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue";
-        document.getElementById('teacherOverviewTab').classList.remove('hidden');
-        document.getElementById('teacherTestsTab').classList.add('hidden');
-        document.getElementById('studentOverviewTab').classList.remove('hidden');
-        document.getElementById('studentTestsTab').classList.add('hidden');
-      } else {
-        tabTestsBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-brand-blue bg-blue-50";
-        tabOverviewBtn.className = "flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all text-slate-500 hover:text-brand-blue";
-        document.getElementById('teacherOverviewTab').classList.add('hidden');
-        document.getElementById('teacherTestsTab').classList.remove('hidden');
-        document.getElementById('studentOverviewTab').classList.add('hidden');
-        document.getElementById('studentTestsTab').classList.remove('hidden');
-      }
-    }
-
-    function generateCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
-
-    async function handleCreateSlot(e) {
-      e.preventDefault();
-      const title = document.getElementById('slotTitleInput').value.trim();
-      const timing = document.getElementById('slotTimingInput').value.trim();
-      await supabase.from('slots').insert([{ title, timing, code: generateCode() }]);
-      closeModal('createSlotModal');
-      e.target.reset();
-      await loadAllSupabaseData();
-    }
-
-    async function handleCreateTest(e) {
-      e.preventDefault();
-      const slotId = document.getElementById('testTargetSlot').value;
-      const title = document.getElementById('testTitleInput').value.trim();
-      const maxMarks = parseInt(document.getElementById('testMaxMarksInput').value, 10);
-      await supabase.from('tests').insert([{ slot_id: slotId, title, max_marks: maxMarks }]);
-      closeModal('createTestModal');
-      e.target.reset();
-      await loadAllSupabaseData();
-    }
-
-    async function handlePostContent(e) {
-      e.preventDefault();
-      const btn = document.getElementById('postSubmitBtn');
-      btn.innerText = "Uploading...";
-      btn.disabled = true;
-
-      const slotId = document.getElementById('postTargetSlot').value;
-      const type = document.getElementById('postType').value;
-      const title = document.getElementById('postTitle').value.trim();
-      const content = document.getElementById('postContent').value.trim();
-      const fileInput = document.getElementById('postFileInput');
-
-      let fileUrl = null;
-      let fileName = null;
-
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        fileName = file.name;
-        const filePath = `${Date.now()}_${file.name}`;
-        const { data: uploadData, error: uploadErr } = await supabase.storage.from('class-files').upload(filePath, file);
-
-        if (!uploadErr) {
-          const { data: publicUrlData } = supabase.storage.from('class-files').getPublicUrl(filePath);
-          fileUrl = publicUrlData.publicUrl;
-        } else {
-          alert("File Upload Warning: " + uploadErr.message);
-        }
-      }
-
-      await supabase.from('posts').insert([{ slot_id: slotId, type, title, content, file_url: fileUrl, file_name: fileName }]);
-
-      btn.innerText = "Publish Post";
-      btn.disabled = false;
-      closeModal('postContentModal');
-      e.target.reset();
-      await loadAllSupabaseData();
-    }
-
-    function renderTeacherView() {
-      const slotSelect = document.getElementById('teacherSlotSelect');
-      const postSelect = document.getElementById('postTargetSlot');
-      const testSelect = document.getElementById('testTargetSlot');
-      [slotSelect, postSelect, testSelect].forEach(sel => sel.innerHTML = '');
-
-      appState.slots.forEach(slot => {
-        slotSelect.innerHTML += `<option value="${slot.id}">${slot.title} (${slot.timing})</option>`;
-        postSelect.innerHTML += `<option value="${slot.id}">${slot.title}</option>`;
-        testSelect.innerHTML += `<option value="${slot.id}">${slot.title}</option>`;
-      });
-
-      const slotsContainer = document.getElementById('teacherSlotsList');
-      slotsContainer.innerHTML = '';
-      appState.slots.forEach(slot => {
-        slotsContainer.innerHTML += `
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-            <div class="flex justify-between items-start">
-              <h4 class="font-bold text-sm text-slate-800">${slot.title}</h4>
-              <span class="bg-blue-100 text-brand-blue text-[10px] font-mono px-2 py-0.5 rounded font-bold">CODE: ${slot.code}</span>
-            </div>
-            <p class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${slot.timing}</p>
+    studentTestResultsList.innerHTML += `
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${slot ? slot.title : 'Tuition Batch'}</span>
+            <h4 class="font-bold text-base text-slate-800">${test.title}</h4>
           </div>
-        `;
-      });
+          <span class="px-3 py-1 rounded-full text-xs font-bold ${scoreBadge}">${hasScore ? `${percentage}%` : 'Pending'}</span>
+        </div>
+        <div class="bg-slate-50 p-4 rounded-xl flex justify-between items-center border border-slate-100">
+          <span class="text-xs font-semibold text-slate-500">Marks Obtained</span>
+          <span class="text-xl font-black text-slate-800">${hasScore ? score : '--'} <span class="text-sm font-normal text-slate-400">/ ${test.max_marks}</span></span>
+        </div>
+      </div>`;
+  });
+}
 
-      loadAttendanceRoster();
-
-      const teacherTestSelect = document.getElementById('teacherTestSelect');
-      teacherTestSelect.innerHTML = '';
-      appState.tests.forEach(t => {
-        const slot = appState.slots.find(s => s.id === t.slot_id);
-        teacherTestSelect.innerHTML += `<option value="${t.id}">${t.title} (${slot ? slot.title : 'Batch'})</option>`;
-      });
-      loadTestMarksEditor();
-    }
-
-    function loadAttendanceRoster() {
-      const selectedSlotId = document.getElementById('teacherSlotSelect').value;
-      const tbody = document.getElementById('attendanceRosterBody');
-      tbody.innerHTML = '';
-      if (!selectedSlotId) return;
-
-      document.getElementById('attendanceSummaryText').innerText = `${appState.students.length} Students Listed`;
-
-      appState.students.forEach(student => {
-        const isPresent = appState.attendance[selectedSlotId]?.[student.id] !== false;
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="px-4 py-3 font-medium text-slate-800">${student.name}</td>
-            <td class="px-4 py-3 text-slate-500 font-mono text-xs">#${student.roll}</td>
-            <td class="px-4 py-3 text-center">
-              <label class="inline-flex items-center cursor-pointer">
-                <input type="checkbox" onchange="toggleAttendance('${selectedSlotId}', '${student.id}', this.checked)" ${isPresent ? 'checked' : ''} class="sr-only peer">
-                <div class="relative w-11 h-6 bg-brand-accentRed rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                <span class="ms-2 text-xs font-bold ${isPresent ? 'text-emerald-600' : 'text-brand-accentRed'}">${isPresent ? 'PRESENT' : 'ABSENT'}</span>
-              </label>
-            </td>
-          </tr>
-        `;
-      });
-    }
-
-    function toggleAttendance(slotId, studentId, isChecked) {
-      if (!appState.attendance[slotId]) appState.attendance[slotId] = {};
-      appState.attendance[slotId][studentId] = isChecked;
-    }
-
-    function saveAttendance() { alert("Attendance saved!"); }
-
-    function loadTestMarksEditor() {
-      const testId = document.getElementById('teacherTestSelect').value;
-      const tbody = document.getElementById('testMarksEditorBody');
-      tbody.innerHTML = '';
-      if (!testId) return;
-
-      const test = appState.tests.find(t => t.id === testId);
-      if (!test) return;
-
-      document.getElementById('testMarksSummaryText').innerText = `${appState.students.length} Students`;
-
-      appState.students.forEach(student => {
-        const score = test.marks && test.marks[student.name] !== undefined ? test.marks[student.name] : '';
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="px-4 py-3 font-medium text-slate-800">${student.name}</td>
-            <td class="px-4 py-3 text-slate-500 font-mono text-xs">#${student.roll}</td>
-            <td class="px-4 py-3 text-center">
-              <input type="number" max="${test.max_marks}" min="0" value="${score}" onchange="updateStudentMark('${test.id}', '${student.name}', this.value)" class="w-20 text-center border p-1.5 rounded-lg text-sm font-bold" />
-            </td>
-            <td class="px-4 py-3 text-center font-semibold">${test.max_marks}</td>
-          </tr>
-        `;
-      });
-    }
-
-    async function updateStudentMark(testId, studentName, val) {
-      const numVal = val === '' ? 0 : parseFloat(val);
-      await supabase.from('test_marks').upsert({ test_id: testId, student_name: studentName, marks_obtained: numVal });
-    }
-
-    function saveTestMarks() { alert("Marks saved!"); }
-
-    function renderStudentView() {
-      const feedContainer = document.getElementById('studentFeedList');
-      feedContainer.innerHTML = '';
-
-      appState.posts.forEach(post => {
-        const slot = appState.slots.find(s => s.id === post.slot_id);
-        const badgeColor = post.type === 'Homework' ? 'bg-red-100 text-brand-accentRed' : (post.type === 'Notes' ? 'bg-blue-100 text-brand-lightBlue' : 'bg-amber-100 text-amber-700');
-        
-        let attachmentHtml = '';
-        if (post.file_url) {
-          const isImg = post.file_name && post.file_name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-          if (isImg) {
-            attachmentHtml = `<div class="pt-2"><img src="${post.file_url}" alt="Attachment" class="max-h-60 rounded-xl border border-slate-200 object-cover"/></div>`;
-          } else {
-            attachmentHtml = `
-              <div class="pt-2">
-                <a href="${post.file_url}" target="_blank" download class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 transition">
-                  <i class="fa-solid fa-file-pdf text-red-500 text-sm"></i> Download ${post.file_name || 'Attachment'}
-                </a>
-              </div>
-            `;
-          }
-        }
-
-        feedContainer.innerHTML += `
-          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
-            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${badgeColor}">${post.type}</span>
-            <h4 class="font-bold text-base text-slate-800 pt-1">${post.title}</h4>
-            <p class="text-xs text-slate-400"><i class="fa-solid fa-bookmark mr-1"></i>${slot ? slot.title : 'Batch'}</p>
-            <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">${post.content}</p>
-            ${attachmentHtml}
-            <div class="flex items-center gap-3 pt-1 border-t border-slate-100">
-              <button onclick="reactPost('${post.id}', 'up')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-up"></i><span>${post.thumbs_up || 0}</span></button>
-              <button onclick="reactPost('${post.id}', 'down')" class="flex items-center space-x-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"><i class="fa-regular fa-thumbs-down"></i><span>${post.thumbs_down || 0}</span></button>
-            </div>
-          </div>
-        `;
-      });
-
-      const studentBatchesList = document.getElementById('studentBatchesList');
-      studentBatchesList.innerHTML = '';
-      appState.slots.forEach(slot => {
-        studentBatchesList.innerHTML += `
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-            <h4 class="font-bold text-sm text-slate-800">${slot.title}</h4>
-            <p class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${slot.timing}</p>
-          </div>
-        `;
-      });
-
-      const studentTestResultsList = document.getElementById('studentTestResultsList');
-      studentTestResultsList.innerHTML = '';
-      appState.tests.forEach(test => {
-        const slot = appState.slots.find(s => s.id === test.slot_id);
-        const score = test.marks ? test.marks['Aarav Sharma'] : undefined;
-        const hasScore = score !== undefined;
-        const percentage = hasScore ? Math.round((score / test.max_marks) * 100) : 0;
-        
-        let scoreBadge = hasScore ? (percentage >= 75 ? "bg-emerald-100 text-emerald-700" : (percentage >= 40 ? "bg-blue-100 text-brand-blue" : "bg-red-100 text-brand-accentRed")) : "bg-slate-100 text-slate-600";
-
-        studentTestResultsList.innerHTML += `
-          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
-            <div class="flex justify-between items-start">
-              <div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${slot ? slot.title : 'Tuition Batch'}</span>
-                <h4 class="font-bold text-base text-slate-800">${test.title}</h4>
-              </div>
-              <span class="px-3 py-1 rounded-full text-xs font-bold ${scoreBadge}">${hasScore ? `${percentage}%` : 'Pending'}</span>
-            </div>
-            <div class="bg-slate-50 p-4 rounded-xl flex justify-between items-center border border-slate-100">
-              <span class="text-xs font-semibold text-slate-500">Marks Obtained</span>
-              <span class="text-xl font-black text-slate-800">${hasScore ? score : '--'} <span class="text-sm font-normal text-slate-400">/ ${test.max_marks}</span></span>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    async function reactPost(postId, type) {
-      const post = appState.posts.find(p => p.id === postId);
-      if (post) {
-        const count = type === 'up' ? (post.thumbs_up || 0) + 1 : (post.thumbs_down || 0) + 1;
-        const field = type === 'up' ? 'thumbs_up' : 'thumbs_down';
-        await supabase.from('posts').update({ [field]: count }).eq('id', postId);
-        await loadAllSupabaseData();
-      }
-    }
-
-    function handleJoinBatch(e) {
-      e.preventDefault();
-      const code = document.getElementById('batchCodeInput').value.trim().toUpperCase();
-      const matchedSlot = appState.slots.find(s => s.code === code);
-      if (!matchedSlot) return alert("Invalid Batch Code.");
-      alert(`Joined ${matchedSlot.title}!`);
-      closeModal('joinBatchModal');
-      e.target.reset();
-    }
-  </script>
+async function reactPost(postId, type){
+  const post = appState.posts.find(p => p.id === postId);
+  if (!post) return;
+  const field = type === 'up' ? 'thumbs_up' : 'thumbs_down';
+  const count = (post[field] || 0) + 1;
+  const { error } = await supabase.from('posts').update({ [field]: count }).eq('id', postId);
+  if (error) return alert("Error reacting: " + error.message);
+  await loadAllSupabaseData();
+}
+</script>
 </body>
 </html>
